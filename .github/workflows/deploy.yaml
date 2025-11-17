@@ -49,7 +49,7 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/data-catalog:${{ github.sha }}
             ghcr.io/${{ github.repository_owner }}/data-catalog:latest
           build-args: |
-            GCS_BUCKET_NAME=${{ env.GCS_BUCKET_NAME }}
+            GCS_BUCKET_NAME=${{ vars.GCS_BUCKET_NAME }}
             CATALOG_FILE_PATH=catalog.json
           secret-files: |
             gcp-credentials=./credentials.json
