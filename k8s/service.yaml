@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: data-catalog
+  labels:
+    app: data-catalog
+    component: web
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: data-catalog
+    component: web
+
