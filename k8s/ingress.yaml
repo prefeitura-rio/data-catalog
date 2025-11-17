@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: data-catalog-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: data-catalog.iplan.dados.rio
+      http:
+        paths:
+          - backend:
+              service:
+                name: data-catalog
+                port:
+                  number: 80
+            path: /
+            pathType: Prefix
+  tls:
+    - hosts:
+        - data-catalog.iplan.dados.rio
+      secretName: data-catalog-tls
