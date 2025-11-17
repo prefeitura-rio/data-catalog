@@ -59,13 +59,3 @@ jobs:
       - name: Clean up credentials
         if: always()
         run: rm -f ./credentials.json
-
-      - name: Deploy to production
-        run: |
-          echo "=== Deployment Information ==="
-          echo "Environment: production"
-          echo "Trigger: ${{ github.event_name }}"
-          echo "Force rebuild: ${{ github.event.inputs.force_rebuild || 'false' }}"
-          echo "Image: ghcr.io/${{ github.repository_owner }}/data-catalog:${{ github.sha }}"
-          echo ""
-          echo "Deploy step - customize based on your infrastructure"
