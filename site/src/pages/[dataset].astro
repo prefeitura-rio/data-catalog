@@ -1,5 +1,5 @@
 ---
-import { ArrowLeft, Copy, ExternalLink } from '@lucide/astro';
+import { ArrowLeft, Code, ExternalLink } from '@lucide/astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getStaticPaths, getTotalColumns } from '../utils/schema.js';
 import { prepareDatasetTablesForRender } from '../utils/rendering.js';
@@ -58,9 +58,9 @@ const tableRenderData = prepareDatasetTablesForRender(dataset.tables);
 						data-dataset={dataset.name}
 						data-table={tableData.name}
 						data-columns={JSON.stringify(tableData.schemaEntries.map(col => col.name))}
-						class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm cursor-copy"
+						class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm cursor-pointer"
 					>
-						<Copy size={16} />
+						<Code size={16} />
 						Gerar Query
 					</button>
 
