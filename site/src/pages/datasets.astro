@@ -35,9 +35,14 @@ const datasets = getDatasets().sort((a, b) => a.name.localeCompare(b.name));
 			<article class="flex flex-col md:flex-row md:justify-between md:items-center p-6 bg-white border border-gray-200 rounded-lg transition-transform hover:-translate-y-0.5 hover:shadow-lg">
 				<div class="flex-1 min-w-0">
 					<header class="mb-3">
-						<h3 class="text-xl font-semibold mb-2">
+						<h3 class="text-xl font-semibold mb-1">
 							<a href={`/${dataset.name}/`} data-pagefind-meta="title" class="text-blue-600 hover:underline">{dataset.name}</a>
 						</h3>
+						<div class="mb-2">
+							<span class="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+								{dataset.project}
+							</span>
+						</div>
 						<div class="text-sm text-gray-500">
 							{dataset.tableCount} tabela{dataset.tableCount !== 1 ? 's' : ''} •
 							Atualizado em {new Date(dataset.lastUpdated).toLocaleDateString('pt-BR')}
@@ -58,4 +63,7 @@ const datasets = getDatasets().sort((a, b) => a.name.localeCompare(b.name));
 
 	<link href="/pagefind/pagefind-ui.css" rel="stylesheet">
 	<script is:inline src="/pagefind/pagefind-ui.js"></script>
+	<script>
+		import '../scripts/pagefind-init.js';
+	</script>
 </BaseLayout>

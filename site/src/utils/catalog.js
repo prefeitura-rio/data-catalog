@@ -24,6 +24,7 @@ import path from 'path';
 /**
  * @typedef {Object} Dataset
  * @property {string} name - Dataset name
+ * @property {string} project - Project key this dataset belongs to
  * @property {string} description - Dataset description
  * @property {number} tableCount - Number of tables in the dataset
  * @property {number} lastUpdated - Unix timestamp of most recent table update
@@ -32,6 +33,7 @@ import path from 'path';
 /**
  * @typedef {Object} DatasetFull
  * @property {string} name - Dataset name
+ * @property {string} project - Project key this dataset belongs to
  * @property {string} description - Dataset description
  * @property {Table[]} tables - Array of tables with full schema information
  */
@@ -39,6 +41,15 @@ import path from 'path';
 /**
  * @typedef {Record<string, DatasetRaw>} CatalogData
  */
+
+/**
+ * Gets all available project keys from catalog data
+ * @returns {string[]} Array of project keys (e.g., ['rj-iplanrio', 'sp-sabesp'])
+ */
+export function getProjectKeys() {
+    const catalog = loadCatalogData();
+    return Object.keys(catalog);
+}
 
 /**
  * Loads and parses the catalog.json file
@@ -51,42 +62,68 @@ export function loadCatalogData() {
 }
 
 /**
- * Transforms raw catalog data into processed dataset objects
- * @returns {Dataset[]} Array of dataset objects with computed properties
+ * Gets datasets from all projects
+ * @returns {Dataset[]} Array of dataset objects with computed properties from all projects
  */
 export function getDatasets() {
     const catalog = loadCatalogData();
-
-    return Object.keys(catalog['rj-iplanrio']).map(datasetName => ({
-        name: datasetName,
-        description: catalog['rj-iplanrio'][datasetName].description,
-        tableCount: catalog['rj-iplanrio'][datasetName].tables.length,
-        lastUpdated: Math.max(...catalog['rj-iplanrio'][datasetName].tables.map(table =>
-            new Date(table.created_at).getTime()
-        ))
-    }));
+    const projectKeys = getProjectKeys();
+    
+    const allDatasets = [];
+    projectKeys.forEach(projectKey => {
+        Object.keys(catalog[projectKey]).forEach(datasetName => {
+            allDatasets.push({
+                name: datasetName,
+                project: projectKey,
+                description: catalog[projectKey][datasetName].description,
+                tableCount: catalog[projectKey][datasetName].tables.length,
+                lastUpdated: Math.max(...catalog[projectKey][datasetName].tables.map(table =>
+                    new Date(table.created_at).getTime()
+                ))
+            });
+        });
+    });
+    
+    return allDatasets;
 }
 
 /**
- * Gets a specific dataset by name
+ * Gets a specific dataset by name, searching across all projects
  * @param {string} datasetName - Name of the dataset to retrieve
  * @returns {DatasetFull} Dataset object with name, description, and tables
  */
 export function getDatasetByName(datasetName) {
     const catalog = loadCatalogData();
-
-    return {
-        name: datasetName,
-        description: catalog['rj-iplanrio'][datasetName].description,
-        tables: catalog['rj-iplanrio'][datasetName].tables
-    };
+    const projectKeys = getProjectKeys();
+    
+    for (const projectKey of projectKeys) {
+        if (catalog[projectKey][datasetName]) {
+            return {
+                name: datasetName,
+                project: projectKey,
+                description: catalog[projectKey][datasetName].description,
+                tables: catalog[projectKey][datasetName].tables
+            };
+        }
+    }
+    
+    throw new Error(`Dataset "${datasetName}" not found in any project`);
 }
 
 /**
  * Gets all available dataset names for static path generation
- * @returns {string[]} Array of dataset names
+ * @returns {string[]} Array of dataset names from all projects
  */
 export function getDatasetNames() {
     const catalog = loadCatalogData();
-    return Object.keys(catalog['rj-iplanrio']);
+    const projectKeys = getProjectKeys();
+    const allNames = new Set();
+    
+    projectKeys.forEach(projectKey => {
+        Object.keys(catalog[projectKey]).forEach(datasetName => {
+            allNames.add(datasetName);
+        });
+    });
+    
+    return Array.from(allNames);
 }
