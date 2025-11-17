@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: data-catalog
-          image: ghcr.io/phrmendes/data-catalog:latest
+          image: ghcr.io/prefeitura-rio/data-catalog:latest
           ports:
             - containerPort: 8080
               name: http
@@ -67,4 +67,3 @@ spec:
           emptyDir: {}
       securityContext:
         fsGroup: 101
-
