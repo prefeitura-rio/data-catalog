@@ -1,5 +1,3 @@
-/* BigQuery integration utilities for copying SQL queries */
-
 /**
  * Copies a BigQuery SQL query to the clipboard and provides user feedback
  * @param {string} projectKey - The BigQuery project ID (e.g., 'rj-iplanrio')
@@ -9,7 +7,15 @@
  * @param {HTMLElement} button - The button element that was clicked
  */
 function copyQuery(projectKey, datasetName, tableName, columnNames, button) {
-    const columns = columnNames.join(',\n  ');
+    const filteredColumns = columnNames.filter(column => {
+        if (column.includes('.')) {
+            const parentColumn = column.split('.')[0];
+            return !columnNames.includes(parentColumn);
+        }
+        return true;
+    });
+
+    const columns = filteredColumns.join(',\n  ');
     const query = `SELECT
   ${columns}
 FROM \`${projectKey}.${datasetName}.${tableName}\`
