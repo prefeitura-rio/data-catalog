@@ -1,5 +1,5 @@
 ---
-import { Database, Home, List, Menu } from '@lucide/astro';
+import { House, List, Menu } from '@lucide/astro';
 
 const currentPath = Astro.url.pathname;
 
@@ -9,14 +9,12 @@ function isActive(path: string): boolean {
   return false;
 }
 ---
-
 <nav class="bg-white shadow-sm border-b border-gray-200">
   <div class="container mx-auto px-4 max-w-6xl">
     <div class="flex justify-between items-center h-16">
       <div class="flex items-center space-x-4">
-        <a href="/" class="flex items-center space-x-2">
-          <Database class="w-6 h-6 text-blue-600" />
-          <span class="text-xl font-bold text-gray-900">Catálogo de Dados</span>
+        <a href="/" class="flex items-center">
+          <img src="/iplanrio.gif" alt="IplanRio" class="h-8 sm:h-10 w-auto" />
         </a>
       </div>
 
@@ -29,7 +27,7 @@ function isActive(path: string): boolean {
               : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
           }`}
         >
-          <Home class="w-4 h-4 mr-2" />
+          <House class="w-4 h-4 mr-2" />
           Início
         </a>
 
@@ -69,7 +67,7 @@ function isActive(path: string): boolean {
               : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
           }`}
         >
-          <Home class="w-4 h-4 mr-3" />
+          <House class="w-4 h-4 mr-3" />
           Início
         </a>
 
