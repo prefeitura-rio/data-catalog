@@ -12,7 +12,9 @@ const CONFIG = {
         queryPreview: '.query-preview',
         codeContainer: '.query-code-container',
         copyButton: '.copy-query-button',
-        closeButton: '.query-preview-close'
+        closeButton: '.query-preview-close',
+        selectAllCheckbox: '.table-select-all-checkbox',
+        columnCheckbox: '.column-checkbox'
     },
     cssClasses: {
         previewWindow: 'query-preview',
@@ -126,6 +128,20 @@ function filterNestedColumns(columnNames) {
  * @returns {string} The formatted SQL query
  */
 function generateQuery(projectKey, datasetName, tableName, columnNames) {
+    if (!columnNames || columnNames.length === 0) {
+        return `SELECT
+  *
+FROM \`${projectKey}.${datasetName}.${tableName}\`
+LIMIT 100`;
+    }
+
+    if (columnNames.length === 1 && columnNames[0] === '*') {
+        return `SELECT
+  *
+FROM \`${projectKey}.${datasetName}.${tableName}\`
+LIMIT 100`;
+    }
+
     const filteredColumns = filterNestedColumns(columnNames);
     const formattedColumns = filteredColumns.join(',\n  ');
 
@@ -394,16 +410,30 @@ async function showPreview(sqlQuery, triggerButton) {
 
 
 /**
- * Extracts data attributes from button element
+ * Gets selected column names for a specific table
+ * @param {string} tableName - The table name to get selected columns for
+ * @returns {string[]} Array of selected column names
+ */
+function getSelectedColumns(tableName) {
+    const checkboxes = document.querySelectorAll(`.column-checkbox[data-table="${tableName}"]:checked`);
+    return Array.from(checkboxes).map(checkbox => checkbox.dataset.column);
+}
+
+
+/**
+ * Extracts data attributes from button element and gets selected columns
  * @param {HTMLElement} button - Button element with data attributes
- * @returns {Object} Extracted data
+ * @returns {Object} Extracted data with selected columns
  */
 function extractButtonData(button) {
+    const tableName = button.dataset.table;
+    const selectedColumns = getSelectedColumns(tableName);
+
     return {
         projectKey: button.dataset.project,
         datasetName: button.dataset.dataset,
-        tableName: button.dataset.table,
-        columnNames: JSON.parse(button.dataset.columns)
+        tableName: tableName,
+        columnNames: selectedColumns
     };
 }
 
@@ -424,7 +454,66 @@ async function handleQueryGeneration(button) {
 
 
 /**
- * Attaches click handlers to query generation buttons
+ * Updates visual feedback for column selection
+ * @param {HTMLElement} checkbox - The checkbox that was toggled
+ */
+function updateColumnVisualState(checkbox) {
+    const row = checkbox.closest('tr');
+    if (!row) return;
+
+    if (checkbox.checked) {
+        row.classList.add('bg-blue-50');
+        row.classList.remove('hover:bg-gray-50');
+        row.classList.add('hover:bg-blue-100');
+    } else {
+        row.classList.remove('bg-blue-50', 'hover:bg-blue-100');
+        row.classList.add('hover:bg-gray-50');
+    }
+}
+
+
+/**
+ * Handles select all checkbox functionality
+ * @param {HTMLElement} selectAllCheckbox - The select all checkbox
+ */
+function handleSelectAllToggle(selectAllCheckbox) {
+    const tableName = selectAllCheckbox.dataset.table;
+    const columnCheckboxes = document.querySelectorAll(`.column-checkbox[data-table="${tableName}"]`);
+    const isChecked = selectAllCheckbox.checked;
+
+    columnCheckboxes.forEach(checkbox => {
+        checkbox.checked = isChecked;
+        updateColumnVisualState(checkbox);
+    });
+}
+
+
+/**
+ * Updates select all checkbox state based on individual column selections
+ * @param {string} tableName - The table name to update select all state for
+ */
+function updateSelectAllState(tableName) {
+    const selectAllCheckbox = document.querySelector(`.table-select-all-checkbox[data-table="${tableName}"]`);
+    const columnCheckboxes = document.querySelectorAll(`.column-checkbox[data-table="${tableName}"]`);
+    const checkedBoxes = document.querySelectorAll(`.column-checkbox[data-table="${tableName}"]:checked`);
+
+    if (!selectAllCheckbox) return;
+
+    if (checkedBoxes.length === 0) {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = false;
+    } else if (checkedBoxes.length === columnCheckboxes.length) {
+        selectAllCheckbox.checked = true;
+        selectAllCheckbox.indeterminate = false;
+    } else {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = true;
+    }
+}
+
+
+/**
+ * Attaches click handlers to query generation buttons and checkbox functionality
  */
 function attachClickHandlers() {
     document.addEventListener('click', (event) => {
@@ -433,14 +522,47 @@ function attachClickHandlers() {
             handleQueryGeneration(queryButton);
         }
     });
+
+    document.addEventListener('change', (event) => {
+        const selectAllCheckbox = event.target.closest(CONFIG.selectors.selectAllCheckbox);
+        if (selectAllCheckbox) {
+            handleSelectAllToggle(selectAllCheckbox);
+            return;
+        }
+
+        const columnCheckbox = event.target.closest(CONFIG.selectors.columnCheckbox);
+        if (columnCheckbox) {
+            const tableName = columnCheckbox.dataset.table;
+            updateColumnVisualState(columnCheckbox);
+            updateSelectAllState(tableName);
+        }
+    });
 }
 
 
 /**
- * Initializes all event handlers
+ * Initializes checkbox states for all tables
+ */
+function initializeCheckboxStates() {
+    const selectAllCheckboxes = document.querySelectorAll(CONFIG.selectors.selectAllCheckbox);
+    selectAllCheckboxes.forEach(checkbox => {
+        const tableName = checkbox.dataset.table;
+        updateSelectAllState(tableName);
+    });
+
+    const columnCheckboxes = document.querySelectorAll(CONFIG.selectors.columnCheckbox);
+    columnCheckboxes.forEach(checkbox => {
+        updateColumnVisualState(checkbox);
+    });
+}
+
+
+/**
+ * Initializes all event handlers and checkbox states
  */
 function initializeEventHandlers() {
     attachClickHandlers();
+    initializeCheckboxStates();
 }
 
 
