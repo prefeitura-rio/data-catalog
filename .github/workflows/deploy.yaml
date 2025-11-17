@@ -3,6 +3,11 @@ name: Build and Deploy Data Catalog
 on:
   push:
     branches: [master]
+    paths:
+      - "site/**"
+      - "Dockerfile"
+      - "nginx/**"
+      - ".github/workflows/deploy.yaml"
   schedule:
     - cron: "0 6 * * *"
   workflow_dispatch:
