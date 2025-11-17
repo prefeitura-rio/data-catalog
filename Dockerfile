@@ -5,10 +5,8 @@ WORKDIR /fetch
 ARG GCS_BUCKET_NAME
 ARG CATALOG_FILE_PATH=catalog.json
 
-RUN apk add --no-cache jq
-
-RUN --mount=type=secret,id=gcp-credentials,target=/tmp/gcp-key.json \
-    gcloud auth activate-service-account --key-file=/tmp/gcp-key.json && \
+RUN --mount=type=secret,id=gcp-credentials,target=/tmp/credentials.json \
+    gcloud auth activate-service-account --key-file=/tmp/credentials.json && \
     gsutil cp "gs://${GCS_BUCKET_NAME}/${CATALOG_FILE_PATH}" ./catalog.json
 
 FROM node:lts AS build
