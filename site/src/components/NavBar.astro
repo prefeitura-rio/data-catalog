@@ -1,0 +1,96 @@
+---
+const currentPath = Astro.url.pathname;
+
+function isActive(path: string): boolean {
+  if (path === '/' && currentPath === '/') return true;
+  if (path !== '/' && currentPath.startsWith(path)) return true;
+  return false;
+}
+---
+
+<nav class="bg-white shadow-sm border-b border-gray-200">
+  <div class="container mx-auto px-4 max-w-6xl">
+    <div class="flex justify-between items-center h-16">
+      <div class="flex items-center space-x-4">
+        <a href="/" class="flex items-center space-x-2">
+          <i data-lucide="database" class="w-6 h-6 text-blue-600"></i>
+          <span class="text-xl font-bold text-gray-900">Catálogo de Dados</span>
+        </a>
+      </div>
+
+      <div class="hidden md:flex items-center space-x-8">
+        <a
+          href="/"
+          class={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+            isActive('/') && currentPath === '/'
+              ? 'text-blue-600 bg-blue-50'
+              : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
+          }`}
+        >
+          <i data-lucide="home" class="w-4 h-4 mr-2"></i>
+          Início
+        </a>
+
+        <a
+          href="/datasets/"
+          class={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+            isActive('/datasets/') || (currentPath !== '/' && currentPath !== '/datasets/' && currentPath !== '/datasets')
+              ? 'text-blue-600 bg-blue-50'
+              : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
+          }`}
+        >
+          <i data-lucide="list" class="w-4 h-4 mr-2"></i>
+          Datasets
+        </a>
+      </div>
+
+      <div class="md:hidden">
+        <button
+          type="button"
+          id="mobile-menu-button"
+          class="inline-flex items-center justify-center p-2 rounded-md text-gray-600 hover:text-blue-600 hover:bg-gray-50 transition-colors"
+          aria-expanded="false"
+        >
+          <span class="sr-only">Abrir menu</span>
+          <i data-lucide="menu" class="w-6 h-6"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="md:hidden" id="mobile-menu" style="display: none;">
+      <div class="px-2 pt-2 pb-3 space-y-1 border-t border-gray-200">
+        <a
+          href="/"
+          class={`flex items-center px-3 py-2 text-base font-medium rounded-md transition-colors ${
+            isActive('/') && currentPath === '/'
+              ? 'text-blue-600 bg-blue-50'
+              : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
+          }`}
+        >
+          <i data-lucide="home" class="w-4 h-4 mr-3"></i>
+          Início
+        </a>
+
+        <a
+          href="/datasets/"
+          class={`flex items-center px-3 py-2 text-base font-medium rounded-md transition-colors ${
+            isActive('/datasets/') || (currentPath !== '/' && currentPath !== '/datasets/' && currentPath !== '/datasets')
+              ? 'text-blue-600 bg-blue-50'
+              : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
+          }`}
+        >
+          <i data-lucide="list" class="w-4 h-4 mr-3"></i>
+          Datasets
+        </a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<script is:inline src="/js/mobile-menu.js"></script>
+
+<style>
+  [data-lucide] {
+    stroke-width: 2;
+  }
+</style>

@@ -1,0 +1,43 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SearchBar from '../components/SearchBar.astro';
+import { getDatasets } from '../utils/catalog.js';
+
+const datasets = getDatasets();
+---
+<BaseLayout title="Iplanrio">
+	<header class="text-center mb-12">
+		<h1 class="text-4xl font-bold text-gray-800 mb-4">Catálogo de Dados Iplanrio</h1>
+		<p class="text-lg text-gray-600 mb-8">Explore os conjuntos de dados disponíveis com esquemas detalhados e documentação completa.</p>
+
+		<div class="flex justify-center gap-8 mb-12 p-6 bg-white border border-gray-200 rounded-lg">
+			<div class="text-center">
+				<div class="text-4xl font-bold text-blue-600 mb-1">{datasets.length}</div>
+				<div class="text-sm text-gray-500">Conjuntos de Dados</div>
+			</div>
+			<div class="text-center">
+				<div class="text-4xl font-bold text-blue-600 mb-1">{datasets.reduce((sum, d) => sum + d.tableCount, 0)}</div>
+				<div class="text-sm text-gray-500">Tabelas</div>
+			</div>
+		</div>
+
+		<SearchBar
+			placeholder="Pesquisar datasets, tabelas ou esquemas..."
+			showNavLinks={false}
+		/>
+	</header>
+
+	<!-- Hidden content for Pagefind search indexing -->
+	<div style="display: none;">
+		{datasets.map(dataset => (
+			<div data-pagefind-body>
+				<h3 data-pagefind-meta="title">{dataset.name}</h3>
+				<p data-pagefind-meta="description">{dataset.description || 'Sem descrição disponível'}</p>
+				<a href={`/${dataset.name}/`}>Ver Dataset</a>
+			</div>
+		))}
+	</div>
+
+	<link href="/pagefind/pagefind-ui.css" rel="stylesheet">
+	<script is:inline src="/pagefind/pagefind-ui.js"></script>
+</BaseLayout>

@@ -1,0 +1,25 @@
+{
+  "name": "data-catalog",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "npm run build && astro dev",
+    "build": "astro build && npm run postbuild",
+    "preview": "astro preview",
+    "astro": "astro",
+    "check": "astro check",
+    "postbuild": "pagefind --site dist --force-language pt"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.1.17",
+    "astro": "^5.15.7",
+    "lucide": "^0.554.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.5",
+    "autoprefixer": "^10.4.22",
+    "pagefind": "^1.4.0",
+    "tailwindcss": "^4.1.17",
+    "typescript": "^5.9.3"
+  }
+}

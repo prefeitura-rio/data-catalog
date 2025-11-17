@@ -1,0 +1,22 @@
+---
+import '../styles/global.css';
+import NavBar from '../components/NavBar.astro';
+const { title } = Astro.props;
+---
+<html lang="pt-BR">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>{title} - Catálogo de Dados Iplanrio</title>
+	</head>
+	<body class="bg-gray-50 text-gray-900 min-h-screen">
+		<NavBar />
+		<main class="container mx-auto px-4 py-8 max-w-6xl">
+			<slot />
+		</main>
+		<script is:inline src="/js/lucide-icons.js"></script>
+		<script is:inline src="/js/pagefind-init.js"></script>
+	</body>
+</html>
