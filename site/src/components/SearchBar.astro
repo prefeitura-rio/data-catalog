@@ -1,4 +1,6 @@
 ---
+import { Search, List } from '@lucide/astro';
+
 export interface Props {
   placeholder?: string;
   showNavLinks?: boolean;
@@ -15,14 +17,14 @@ const {
 <div class={containerClass} data-search-placeholder={placeholder}>
   <div class="w-full max-w-2xl mx-auto mb-4">
     <div class="relative flex justify-center">
-      <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 z-10 pointer-events-none w-4 h-4"></i>
+      <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 z-10 pointer-events-none w-4 h-4" />
       <div id="search" class="w-full"></div>
     </div>
   </div>
   {showNavLinks && (
     <div class="flex justify-center gap-4">
       <a href="/datasets" class="inline-flex items-center gap-2 px-4 py-2 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-600 hover:text-white transition-colors">
-        <i data-lucide="list"></i> Ver Todos os Datasets
+        <List /> Ver Todos os Datasets
       </a>
     </div>
   )}

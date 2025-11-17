@@ -1,4 +1,6 @@
 ---
+import { Database, Home, List, Menu } from '@lucide/astro';
+
 const currentPath = Astro.url.pathname;
 
 function isActive(path: string): boolean {
@@ -13,7 +15,7 @@ function isActive(path: string): boolean {
     <div class="flex justify-between items-center h-16">
       <div class="flex items-center space-x-4">
         <a href="/" class="flex items-center space-x-2">
-          <i data-lucide="database" class="w-6 h-6 text-blue-600"></i>
+          <Database class="w-6 h-6 text-blue-600" />
           <span class="text-xl font-bold text-gray-900">Catálogo de Dados</span>
         </a>
       </div>
@@ -27,7 +29,7 @@ function isActive(path: string): boolean {
               : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
           }`}
         >
-          <i data-lucide="home" class="w-4 h-4 mr-2"></i>
+          <Home class="w-4 h-4 mr-2" />
           Início
         </a>
 
@@ -39,7 +41,7 @@ function isActive(path: string): boolean {
               : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
           }`}
         >
-          <i data-lucide="list" class="w-4 h-4 mr-2"></i>
+          <List class="w-4 h-4 mr-2" />
           Datasets
         </a>
       </div>
@@ -52,7 +54,7 @@ function isActive(path: string): boolean {
           aria-expanded="false"
         >
           <span class="sr-only">Abrir menu</span>
-          <i data-lucide="menu" class="w-6 h-6"></i>
+          <Menu class="w-6 h-6" />
         </button>
       </div>
     </div>
@@ -67,7 +69,7 @@ function isActive(path: string): boolean {
               : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
           }`}
         >
-          <i data-lucide="home" class="w-4 h-4 mr-3"></i>
+          <Home class="w-4 h-4 mr-3" />
           Início
         </a>
 
@@ -79,7 +81,7 @@ function isActive(path: string): boolean {
               : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
           }`}
         >
-          <i data-lucide="list" class="w-4 h-4 mr-3"></i>
+          <List class="w-4 h-4 mr-3" />
           Datasets
         </a>
       </div>
@@ -88,9 +90,3 @@ function isActive(path: string): boolean {
 </nav>
 
 <script is:inline src="/js/mobile-menu.js"></script>
-
-<style>
-  [data-lucide] {
-    stroke-width: 2;
-  }
-</style>
