@@ -13,14 +13,18 @@ services:
       watch:
         - action: rebuild
           path: ./site/src
-        - action: rebuild
+        - action: sync
           path: ./site/public
+          target: /app/public
         - action: rebuild
           path: ./site/package.json
         - action: rebuild
           path: ./site/astro.config.mjs
         - action: rebuild
           path: ./site/tailwind.config.mjs
+        - action: sync+restart
+          path: ./nginx/nginx.conf
+          target: /etc/nginx/nginx.conf
 
 secrets:
   gcp-credentials:
