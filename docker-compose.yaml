@@ -1,0 +1,27 @@
+services:
+  data-catalog:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        GCS_BUCKET_NAME: iplanrio-data-catalog
+      secrets:
+        - gcp-credentials
+    ports:
+      - 8080:8080
+    develop:
+      watch:
+        - action: rebuild
+          path: ./site/src
+        - action: rebuild
+          path: ./site/public
+        - action: rebuild
+          path: ./site/package.json
+        - action: rebuild
+          path: ./site/astro.config.mjs
+        - action: rebuild
+          path: ./site/tailwind.config.mjs
+
+secrets:
+  gcp-credentials:
+    file: ./credentials.json
