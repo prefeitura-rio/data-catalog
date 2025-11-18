@@ -22,7 +22,10 @@ const CONFIG = {
 
 const highlighterPromise = createHighlighterCore({
     themes: [import('@shikijs/themes/github-dark')],
-    langs: [import('@shikijs/langs/sql')],
+    langs: [
+        import('@shikijs/langs/sql'),
+        import('@shikijs/langs/python')
+    ],
     engine: createJavaScriptRegexEngine()
 });
 
@@ -31,11 +34,11 @@ const highlighterPromise = createHighlighterCore({
  * @param {string} sqlCode - The SQL code to highlight
  * @returns {Promise<string>} The highlighted HTML code
  */
-async function highlightSQL(sqlCode) {
+async function highlightCode(code, lang) {
     try {
         const highlighter = await highlighterPromise;
-        return highlighter.codeToHtml(sqlCode, {
-            lang: 'sql',
+        return highlighter.codeToHtml(code, {
+            lang,
             theme: 'github-dark',
             transformers: [{
                 pre(node) {
@@ -45,7 +48,7 @@ async function highlightSQL(sqlCode) {
         });
     } catch (error) {
         console.warn('Syntax highlighting failed:', error);
-        return `<pre style="background-color: transparent; color: #e5e7eb; padding: 1rem; margin: 0; font-family: 'Courier New', monospace;"><code>${sqlCode.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>`;
+        return `<pre style="background-color: transparent; color: #e5e7eb; padding: 1rem; margin: 0; font-family: 'Courier New', monospace;"><code>${code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>`;
     }
 }
 
@@ -100,21 +103,20 @@ async function copyToClipboard(text, button) {
  * @param {HTMLButtonElement} triggerButton - The button that triggered the preview
  * @returns {Promise<void>}
  */
-async function showQueryPreview(sqlQuery, triggerButton) {
-    const existingWindow = triggerButton.parentNode.parentNode.querySelector('.query-preview');
-    if (existingWindow) {
-        existingWindow.remove();
-    }
+async function showCodePreview({ code, lang, title, triggerButton }) {
+    const container = triggerButton.parentNode.parentNode;
+    const existingWindow = container.querySelector('.code-preview');
+    if (existingWindow) existingWindow.remove();
 
     const previewWindow = document.createElement('div');
-    previewWindow.className = 'query-preview bg-gray-900 rounded-lg p-4 mt-4 border border-gray-700';
+    previewWindow.className = 'code-preview bg-gray-900 rounded-lg p-4 mt-4 border border-gray-700';
 
     const header = document.createElement('div');
     header.className = 'flex items-center justify-between mb-2';
 
-    const title = document.createElement('span');
-    title.className = 'text-gray-300 text-sm font-medium';
-    title.textContent = 'Query Gerada:';
+    const titleEl = document.createElement('span');
+    titleEl.className = 'text-gray-300 text-sm font-medium';
+    titleEl.textContent = title;
 
     const buttonGroup = document.createElement('div');
     buttonGroup.className = 'flex items-center gap-2';
@@ -122,7 +124,7 @@ async function showQueryPreview(sqlQuery, triggerButton) {
     const copyButton = document.createElement('button');
     copyButton.className = 'bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 rounded flex items-center gap-1';
     copyButton.innerHTML = `${CONFIG.icons.copy} ${CONFIG.messages.copy}`;
-    copyButton.onclick = () => copyToClipboard(sqlQuery, copyButton);
+    copyButton.onclick = () => copyToClipboard(code, copyButton);
 
     const closeButton = document.createElement('button');
     closeButton.className = 'text-gray-400 hover:text-gray-200 text-lg px-2 py-1 hover:bg-gray-800 rounded';
@@ -131,20 +133,20 @@ async function showQueryPreview(sqlQuery, triggerButton) {
 
     const codeContainer = document.createElement('div');
     codeContainer.className = 'bg-gray-900 rounded overflow-x-auto border border-gray-700';
-    codeContainer.innerHTML = `<pre style="background-color: transparent; color: #e5e7eb; padding: 1rem; margin: 0;"><code>${sqlQuery}</code></pre>`;
+    codeContainer.innerHTML = `<pre style="background-color: transparent; color: #e5e7eb; padding: 1rem; margin: 0;"><code>${code}</code></pre>`;
 
-    highlightSQL(sqlQuery).then(highlightedHTML => {
+    highlightCode(code, lang).then(highlightedHTML => {
         codeContainer.innerHTML = highlightedHTML;
     });
 
     buttonGroup.appendChild(copyButton);
     buttonGroup.appendChild(closeButton);
-    header.appendChild(title);
+    header.appendChild(titleEl);
     header.appendChild(buttonGroup);
     previewWindow.appendChild(header);
     previewWindow.appendChild(codeContainer);
 
-    triggerButton.parentNode.parentNode.insertBefore(previewWindow, triggerButton.parentNode.nextSibling);
+    container.insertBefore(previewWindow, triggerButton.parentNode.nextSibling);
 }
 
 /**
@@ -173,7 +175,93 @@ async function handleQueryGeneration(button) {
         selectedColumns
     );
 
-    await showQueryPreview(query, button);
+    await showCodePreview({
+        code: query,
+        lang: 'sql',
+        title: 'Query Gerada',
+        triggerButton: button
+    });
+}
+
+/**
+ * Generates Python snippet for BigQuery API using the same SQL
+ * @param {string} projectKey
+ * @param {string} datasetName
+ * @param {string} tableName
+ * @param {string[]} selectedColumns
+ * @returns {string}
+ */
+function generatePythonRequest(projectKey, datasetName, tableName, selectedColumns) {
+    const query = generateQuery(projectKey, datasetName, tableName, selectedColumns);
+    const parametrizedQuery = query.replace(/LIMIT\s+\d+/i, 'LIMIT @limit');
+    const indentedQuery = parametrizedQuery.split('\n').map(line => `    ${line}`).join('\n');
+
+    return `from google.cloud import bigquery
+from google.api_core.exceptions import GoogleAPIError
+from google.auth.exceptions import DefaultCredentialsError
+
+# -----------------------------------------------------
+# Autenticação:
+# Antes de rodar o script execute:
+# gcloud auth application-default login
+# -----------------------------------------------------
+
+PROJECT_ID = "${projectKey}"
+TABLE_ID = "${projectKey}.${datasetName}.${tableName}"
+
+client = bigquery.Client(project=PROJECT_ID)
+
+def run_query(limit=100):
+    try:
+        query = \"\"\"
+${indentedQuery}
+        \"\"\"
+
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ScalarQueryParameter("limit", "INT64", limit),
+            ],
+            use_query_cache=True,
+            dry_run=False,
+        )
+
+        job = client.query(query, job_config=job_config)
+        results = job.result(timeout=60)
+
+        return [dict(row) for row in results]
+
+    except (GoogleAPIError, DefaultCredentialsError) as exc:
+        raise RuntimeError(f"Erro ao executar query: {exc}") from exc
+
+
+if __name__ == "__main__":
+    for row in run_query(limit=100):
+        print(row)
+`;
+}
+
+/**
+ * Handles Python request button clicks
+ * @param {HTMLButtonElement} button
+ * @returns {Promise<void>}
+ */
+async function handlePythonRequest(button) {
+    const tableName = button.dataset.table;
+    const selectedColumns = getSelectedColumns(tableName);
+
+    const pythonCode = generatePythonRequest(
+        button.dataset.project,
+        button.dataset.dataset,
+        tableName,
+        selectedColumns
+    );
+
+    await showCodePreview({
+        code: pythonCode,
+        lang: 'python',
+        title: 'Exemplo Python (BigQuery API)',
+        triggerButton: button
+    });
 }
 
 /**
@@ -239,6 +327,12 @@ function updateSelectAllState(tableName) {
  */
 function init() {
     document.addEventListener('click', (event) => {
+        const pythonButton = event.target.closest('[data-python-request]');
+        if (pythonButton) {
+            handlePythonRequest(pythonButton);
+            return;
+        }
+
         const queryButton = event.target.closest('[data-copy-query]');
         if (queryButton) {
             handleQueryGeneration(queryButton);

@@ -1,24 +1,97 @@
 ---
-import { Search, List } from '@lucide/astro';
+import { Search, Filter, List } from '@lucide/astro';
 
 const {
-  placeholder = "Pesquisar...",
-  containerClass = "relative max-w-md mx-auto",
+  placeholder = "Pesquisar por nome, descrição ou tabelas...",
+  containerClass = "",
   showNavLinks = true
 } = Astro.props;
 ---
-<div class={containerClass} data-search-placeholder={placeholder}>
-  <div class="w-full max-w-2xl mx-auto mb-4">
-    <div class="relative flex justify-center">
-      <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 z-10 pointer-events-none w-4 h-4" />
+
+<div
+  class={`w-full h-full rounded-lg border border-slate-200 bg-white px-6 py-4 flex flex-col gap-4 ${containerClass}`}
+  data-search-placeholder={placeholder}
+>
+  <div class="flex items-start justify-between gap-4">
+    <div class="flex items-start gap-3">
+      <div class="mt-1 flex h-8 w-8 items-center justify-center rounded-md bg-blue-50">
+        <Search class="h-4 w-4 text-blue-600" />
+      </div>
+      <div>
+        <h2 class="text-sm font-semibold text-slate-900">Buscar e filtrar</h2>
+        <p class="text-xs text-slate-500">Pesquise por nome, descrição ou tabelas.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="pagefind-search-wrapper w-full">
+    <div class="relative w-full">
+      <Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
       <div id="search" class="w-full"></div>
     </div>
   </div>
+
   {showNavLinks && (
-    <div class="flex justify-center gap-4">
-      <a href="/datasets" class="inline-flex items-center gap-2 px-4 py-2 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-600 hover:text-white transition-colors">
-        <List /> Ver Todos os Datasets
+    <div class="mt-2 flex justify-center">
+      <a
+        href="/datasets"
+        class="inline-flex items-center gap-2 rounded-md border border-blue-600 px-4 py-2 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-600 hover:text-white"
+      >
+        <List class="h-4 w-4" />
+        Ver todos os datasets
       </a>
     </div>
   )}
 </div>
+
+<style>
+  .pagefind-search-wrapper #search,
+  .pagefind-search-wrapper .pagefind-ui__search-input,
+  .pagefind-search-wrapper .pagefind-ui__form {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+
+  :global(.pagefind-ui__form) {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+
+  :global(.pagefind-ui__search-input) {
+    padding-left: 2.25rem !important;
+    height: 2.75rem !important;
+    border-radius: 0.5rem !important;
+    border: 1px solid #e5e7eb !important;
+    font-size: 0.875rem !important;
+  }
+
+  :global(.pagefind-ui__form button) {
+    display: none !important;
+  }
+
+  /* Esconde resultados quando vazio, mostra quando há query ou foco */
+  :global(.pagefind-ui__results) {
+    display: none;
+  }
+
+  :global(.pagefind-ui__form:focus-within + .pagefind-ui__results),
+  :global(.pagefind-ui__form.has-query + .pagefind-ui__results) {
+    display: block;
+  }
+</style>
+
+<script>
+  if (typeof document !== 'undefined') {
+    document.addEventListener('input', (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLInputElement)) return;
+      if (!target.classList.contains('pagefind-ui__search-input')) return;
+
+      const form = target.closest('.pagefind-ui__form');
+      if (!form) return;
+      form.classList.toggle('has-query', target.value.trim().length > 0);
+    });
+  }
+</script>
