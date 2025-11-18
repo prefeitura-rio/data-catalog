@@ -1,5 +1,5 @@
 ---
-import { ArrowRight, Clock, Database, Filter, FolderKanban, Search, Sparkles, Table as TableIcon } from '@lucide/astro';
+import { ArrowRight, Clock, Database, FolderKanban, Sparkles, Table as TableIcon } from '@lucide/astro';
 import Button from '../components/Button.astro';
 import PagefindAssets from '../components/PagefindAssets.astro';
 import SearchBar from '../components/SearchBar.astro';
@@ -75,7 +75,7 @@ const formatNumber = (value: number) => new Intl.NumberFormat('pt-BR').format(va
 
 	<section class="mb-8">
 		<SearchBar
-			placeholder="Pesquisar por nome, descrição ou tabelas..."
+			placeholder="Pesquisar por palavra-chave, nome, descrição, tabela ou coluna..."
 			showNavLinks={false}
 			containerClass="w-full"
 		/>
