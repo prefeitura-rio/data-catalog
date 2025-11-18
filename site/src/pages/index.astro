@@ -1,26 +1,195 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import SearchBar from '../components/SearchBar.astro';
-import StatsDisplay from '../components/StatsDisplay.astro';
+import { Clock, Database, FolderKanban, Search, Sparkles, Table as TableIcon } from '@lucide/astro';
+import Button from '../components/Button.astro';
 import PagefindAssets from '../components/PagefindAssets.astro';
+import SearchBar from '../components/SearchBar.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
 import { getDatasets } from '../scripts/catalog.js';
-import { getHomePageStats } from '../scripts/stats.js';
 
 const datasets = getDatasets();
-const stats = getHomePageStats();
+const latestUpdated = datasets.length ? new Date(Math.max(...datasets.map(d => d.lastUpdated))) : null;
+const recentDatasets = [...datasets].sort((a, b) => b.lastUpdated - a.lastUpdated).slice(0, 4);
+const largestDatasets = [...datasets].sort((a, b) => b.tableCount - a.tableCount).slice(0, 4);
+const projects = Object.entries(
+	datasets.reduce((acc, dataset) => {
+		acc[dataset.project] = (acc[dataset.project] || 0) + 1;
+		return acc;
+	}, {})
+).map(([project, count]) => ({ project, count })).sort((a, b) => b.count - a.count);
+
+const formatNumber = (value: number) => new Intl.NumberFormat('pt-BR').format(value);
 ---
 <BaseLayout title="IPLANRIO">
-	<header class="text-center mb-12">
-		<h1 class="text-4xl font-bold text-gray-800 mb-4">Catálogo de Dados</h1>
-		<p class="text-lg text-gray-600 mb-8">Explore os conjuntos de dados disponíveis com esquemas detalhados e documentação completa.</p>
+	<section class="grid gap-8 lg:grid-cols-[1.1fr,0.9fr] items-start mb-16">
+		<div class="space-y-6">
+			<div class="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
+				<Sparkles class="w-4 h-4" /> Dados oficiais, abertos e pesquisáveis
+			</div>
+			<div>
+				<h1 class="text-3xl font-bold text-gray-900 mb-3">Catálogo de Dados Abertos da Cidade do Rio de Janeiro</h1>
+				<p class="text-lg text-gray-600">
+					Acesse bases publicadas pela IPLANRIO com esquemas completos, documentação e links diretos para o BigQuery.
+				</p>
+			</div>
 
-		<StatsDisplay stats={stats} />
+			<div class="flex flex-wrap gap-3">
+				<Button variant="primary" href="/datasets/" class="text-sm">
+					Explorar datasets
+				</Button>
+				<Button variant="secondary" href="/datasets/" class="text-sm">
+					Ver lista completa
+				</Button>
+			</div>
 
-		<SearchBar
-			placeholder="Pesquisar datasets, tabelas ou esquemas..."
-			showNavLinks={false}
-		/>
-	</header>
+			<div class="grid sm:grid-cols-2 gap-4">
+				{[
+					{
+						label: 'Conjuntos de Dados',
+						value: formatNumber(datasets.length),
+						icon: Database,
+						note: 'Todos os projetos visíveis',
+						href: '/datasets/'
+					},
+					{
+						label: 'Tabelas Disponíveis',
+						value: formatNumber(datasets.reduce((sum, d) => sum + d.tableCount, 0)),
+						icon: TableIcon,
+						note: 'Esquemas completos e descrevendo colunas',
+						href: '/datasets/'
+					},
+					{
+						label: 'Projetos Publicados',
+						value: formatNumber(projects.length),
+						icon: FolderKanban,
+						note: 'Cada projeto agrupa seus datasets'
+					},
+					{
+						label: 'Última atualização',
+						value: latestUpdated ? latestUpdated.toLocaleDateString('pt-BR') : '—',
+						icon: Clock,
+						note: latestUpdated ? 'Data mais recente do catálogo' : 'Aguardando dados'
+					}
+				].map(card => (
+					<a
+						class="flex items-start gap-3 p-4 bg-white border border-gray-200 rounded-lg shadow-sm hover:-translate-y-0.5 hover:shadow-md transition"
+						href={card.href || '#'}
+					>
+						<div class="p-2 rounded-md bg-blue-50 text-blue-700">
+							<card.icon class="w-5 h-5" />
+						</div>
+						<div>
+							<p class="text-sm text-gray-500 mb-1">{card.label}</p>
+							<div class="text-2xl font-semibold text-gray-900">{card.value}</div>
+							{card.note && <p class="text-xs text-gray-500 mt-1">{card.note}</p>}
+						</div>
+					</a>
+				))}
+			</div>
+		</div>
+
+			<SearchBar
+				placeholder="Pesquisar por base, tabela ou coluna..."
+				showNavLinks={false}
+				containerClass="w-full"
+			/>
+			</section>
+
+	<section class="mb-12">
+		<div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+			<div>
+				<p class="text-xs uppercase tracking-wide text-blue-700 font-semibold">Destaques</p>
+				<h2 class="text-2xl font-semibold text-gray-900">Atualizados recentemente</h2>
+				<p class="text-sm text-gray-600">Bases ordenadas pela data mais recente de criação/atualização de tabela.</p>
+			</div>
+			<Button variant="secondary" href="/datasets/" class="text-sm">
+				Ver todos os datasets
+			</Button>
+		</div>
+
+		{recentDatasets.length === 0 ? (
+			<div class="p-4 bg-yellow-50 border border-yellow-200 rounded-md text-sm text-yellow-800">
+				Não há datasets carregados no catálogo. Adicione um catalog.json para começar.
+			</div>
+		) : (
+			<div class="grid gap-4 md:grid-cols-2">
+				{recentDatasets.map(dataset => (
+					<a href={`/${dataset.name}/`} class="block p-5 bg-white border border-gray-200 rounded-lg hover:shadow-md hover:-translate-y-0.5 transition">
+						<div class="flex items-start justify-between gap-3">
+							<div class="flex-1 min-w-0">
+								<div class="flex items-center gap-2 mb-2">
+									<span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-100">
+										{dataset.project}
+									</span>
+									<span class="text-xs text-gray-500">
+										Atualizado em {new Date(dataset.lastUpdated).toLocaleDateString('pt-BR')}
+									</span>
+								</div>
+								<h3 class="text-lg font-semibold text-gray-900 truncate" data-pagefind-meta="title">{dataset.name}</h3>
+								<p class="text-sm text-gray-600 line-clamp-2" data-pagefind-meta="description">
+									{dataset.description || 'Sem descrição disponível'}
+								</p>
+								<div class="flex items-center gap-3 text-sm text-gray-500 mt-3">
+									<span class="inline-flex items-center gap-1">
+										<TableIcon class="w-4 h-4" /> {dataset.tableCount} tabela{dataset.tableCount !== 1 ? 's' : ''}
+									</span>
+								</div>
+							</div>
+							<div class="p-2 text-blue-600 bg-blue-50 rounded-md">
+								<Sparkles class="w-5 h-5" />
+							</div>
+						</div>
+					</a>
+				))}
+			</div>
+		)}
+	</section>
+
+
+	<section class="mb-12">
+		<div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+			<div>
+				<p class="text-xs uppercase tracking-wide text-blue-700 font-semibold">Explorar</p>
+				<h2 class="text-2xl font-semibold text-gray-900">Maiores coleções (por número de tabelas)</h2>
+				<p class="text-sm text-gray-600">Bases com mais tabelas, para quem quer mergulhar em conjuntos completos.</p>
+			</div>
+		</div>
+
+		<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+			{largestDatasets.map(dataset => (
+				<a href={`/${dataset.name}/`} class="block p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md hover:-translate-y-0.5 transition">
+					<h3 class="text-lg font-semibold text-gray-900 mb-1 truncate">{dataset.name}</h3>
+					<p class="text-sm text-gray-600 line-clamp-2 mb-3">{dataset.description || 'Sem descrição disponível'}</p>
+					<div class="flex items-center gap-3 text-sm text-gray-500">
+						<span class="inline-flex items-center gap-1">
+							<TableIcon class="w-4 h-4" /> {dataset.tableCount} tabela{dataset.tableCount !== 1 ? 's' : ''}
+						</span>
+						<span class="inline-flex items-center gap-1">
+							<Database class="w-4 h-4" /> {dataset.project}
+						</span>
+					</div>
+				</a>
+			))}
+		</div>
+	</section>
+
+	<section class="mb-12">
+		<div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+			<div>
+				<p class="text-xs uppercase tracking-wide text-blue-700 font-semibold">Projetos</p>
+				<h2 class="text-2xl font-semibold text-gray-900">Bases por projeto</h2>
+				<p class="text-sm text-gray-600">Veja quantos datasets cada projeto contribui para o catálogo.</p>
+			</div>
+		</div>
+
+		<div class="flex flex-wrap gap-3">
+			{projects.map(project => (
+				<div class="px-4 py-3 bg-white border border-gray-200 rounded-lg shadow-sm">
+					<p class="text-sm font-semibold text-gray-800">{project.project}</p>
+					<p class="text-xs text-gray-500">{project.count} dataset{project.count !== 1 ? 's' : ''}</p>
+				</div>
+			))}
+		</div>
+	</section>
 
 	<!-- hidden content for Pagefind search indexing -->
 	<div style="display: none;">

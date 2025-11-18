@@ -1,5 +1,5 @@
 ---
-import { ArrowLeft, Code, ExternalLink } from '@lucide/astro';
+import { ArrowLeft, Code, ExternalLink, FileCode } from '@lucide/astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Button from '../components/Button.astro';
 import StatsDisplay from '../components/StatsDisplay.astro';
@@ -71,6 +71,19 @@ const stats = getDatasetPageStats(dataset.tables);
 					>
 						<ExternalLink size={16} />
 						Abrir no BigQuery
+					</Button>
+
+					<Button
+						variant="secondary"
+						data-python-request
+						data-project={dataset.project}
+						data-dataset={dataset.name}
+						data-table={tableData.name}
+						data-columns={JSON.stringify(tableData.schemaEntries.map(col => col.name))}
+						class="text-sm border-emerald-600 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-900"
+					>
+						<FileCode size={16} />
+						Consulta com Python
 					</Button>
 				</div>
 			</header>

@@ -1,5 +1,5 @@
 ---
-import { Filter, List, Search } from '@lucide/astro';
+import { Search, Filter, List } from '@lucide/astro';
 
 const {
   placeholder = "Pesquisar por nome, descrição ou tabelas...",
@@ -12,19 +12,14 @@ const {
   class={`w-full h-full rounded-lg border border-slate-200 bg-white px-6 py-4 flex flex-col gap-4 ${containerClass}`}
   data-search-placeholder={placeholder}
 >
-  <!-- Cabeçalho do card -->
   <div class="flex items-start justify-between gap-4">
     <div class="flex items-start gap-3">
       <div class="mt-1 flex h-8 w-8 items-center justify-center rounded-md bg-blue-50">
         <Search class="h-4 w-4 text-blue-600" />
       </div>
       <div>
-        <h2 class="text-sm font-semibold text-slate-900">
-          Buscar e filtrar
-        </h2>
-        <p class="text-xs text-slate-500">
-          Pesquise por nome, descrição ou tabelas.
-        </p>
+        <h2 class="text-sm font-semibold text-slate-900">Buscar e filtrar</h2>
+        <p class="text-xs text-slate-500">Pesquise por nome, descrição ou tabelas.</p>
       </div>
     </div>
 
@@ -34,17 +29,13 @@ const {
     </div>
   </div>
 
-  <!-- Campo de busca ocupando toda a largura do card -->
   <div class="pagefind-search-wrapper w-full">
     <div class="relative w-full">
-      <!-- ícone fixo na esquerda -->
       <Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-      <!-- pagefind injeta o input aqui -->
       <div id="search" class="w-full"></div>
     </div>
   </div>
 
-  <!-- Links opcionais no rodapé do card -->
   {showNavLinks && (
     <div class="mt-2 flex justify-center">
       <a
@@ -59,7 +50,6 @@ const {
 </div>
 
 <style>
-  /* Garantir que o form do Pagefind ocupe 100% da largura dentro do card */
   .pagefind-search-wrapper #search,
   .pagefind-search-wrapper .pagefind-ui__search-input,
   .pagefind-search-wrapper .pagefind-ui__form {
@@ -68,7 +58,6 @@ const {
     margin: 0 !important;
   }
 
-  /* Campo com ícone à esquerda */
   :global(.pagefind-ui__form) {
     width: 100% !important;
     max-width: 100% !important;
@@ -76,14 +65,38 @@ const {
   }
 
   :global(.pagefind-ui__search-input) {
-    padding-left: 2.25rem !important; /* espaço para o ícone */
+    padding-left: 2.25rem !important;
     height: 2.75rem !important;
     border-radius: 0.5rem !important;
-    border: 1px solid #e5e7eb !important; /* slate-200 */
+    border: 1px solid #e5e7eb !important;
     font-size: 0.875rem !important;
   }
 
   :global(.pagefind-ui__form button) {
     display: none !important;
   }
+
+  /* Esconde resultados quando vazio, mostra quando há query ou foco */
+  :global(.pagefind-ui__results) {
+    display: none;
+  }
+
+  :global(.pagefind-ui__form:focus-within + .pagefind-ui__results),
+  :global(.pagefind-ui__form.has-query + .pagefind-ui__results) {
+    display: block;
+  }
 </style>
+
+<script>
+  if (typeof document !== 'undefined') {
+    document.addEventListener('input', (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLInputElement)) return;
+      if (!target.classList.contains('pagefind-ui__search-input')) return;
+
+      const form = target.closest('.pagefind-ui__form');
+      if (!form) return;
+      form.classList.toggle('has-query', target.value.trim().length > 0);
+    });
+  }
+</script>
