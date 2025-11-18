@@ -4,7 +4,6 @@
 
 const defaultPortugueseTranslations = {
     placeholder: "Pesquisar por nome, descrição ou tabelas...",
-    clear_search: "Limpar",
     load_more: "Carregar mais resultados",
     search_label: "Pesquisar neste site",
     filters_label: "Filtros",

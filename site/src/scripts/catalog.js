@@ -1,4 +1,3 @@
-/* Catalog data loading and processing utilities */
 import fs from 'fs';
 import path from 'path';
 
@@ -68,7 +67,7 @@ export function loadCatalogData() {
 export function getDatasets() {
     const catalog = loadCatalogData();
     const projectKeys = getProjectKeys();
-    
+
     const allDatasets = [];
     projectKeys.forEach(projectKey => {
         Object.keys(catalog[projectKey]).forEach(datasetName => {
@@ -83,7 +82,7 @@ export function getDatasets() {
             });
         });
     });
-    
+
     return allDatasets;
 }
 
@@ -95,7 +94,7 @@ export function getDatasets() {
 export function getDatasetByName(datasetName) {
     const catalog = loadCatalogData();
     const projectKeys = getProjectKeys();
-    
+
     for (const projectKey of projectKeys) {
         if (catalog[projectKey][datasetName]) {
             return {
@@ -106,7 +105,7 @@ export function getDatasetByName(datasetName) {
             };
         }
     }
-    
+
     throw new Error(`Dataset "${datasetName}" not found in any project`);
 }
 
@@ -118,12 +117,29 @@ export function getDatasetNames() {
     const catalog = loadCatalogData();
     const projectKeys = getProjectKeys();
     const allNames = new Set();
-    
+
     projectKeys.forEach(projectKey => {
         Object.keys(catalog[projectKey]).forEach(datasetName => {
             allNames.add(datasetName);
         });
     });
-    
+
     return Array.from(allNames);
+}
+
+/**
+ * Calculates the total number of tables across all datasets
+ * @param {Dataset[]} datasets - Array of dataset objects
+ * @returns {number} Total table count
+ */
+export function getTotalTableCount(datasets) {
+    return datasets.reduce((sum, dataset) => sum + dataset.tableCount, 0);
+}
+
+/**
+ * Gets datasets sorted alphabetically by name
+ * @returns {Dataset[]} Sorted array of dataset objects
+ */
+export function getDatasetsSorted() {
+    return getDatasets().sort((a, b) => a.name.localeCompare(b.name));
 }

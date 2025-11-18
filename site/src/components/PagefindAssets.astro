@@ -1,0 +1,17 @@
+---
+const {
+  includeAssets = true,
+  includeScript = true
+} = Astro.props;
+---
+
+{includeAssets && (
+  <>
+    <link href="/pagefind/pagefind-ui.css" rel="stylesheet">
+    <script is:inline src="/pagefind/pagefind-ui.js"></script>
+  </>
+)}
+
+{includeScript && (
+  <script src="/src/scripts/pagefind-init.js"></script>
+)}

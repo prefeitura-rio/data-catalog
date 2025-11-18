@@ -1,19 +1,12 @@
 ---
 import { Search, List } from '@lucide/astro';
 
-export interface Props {
-  placeholder?: string;
-  showNavLinks?: boolean;
-  containerClass?: string;
-}
-
 const {
-  placeholder = "Pesquisar datasets, tabelas ou esquemas...",
-  showNavLinks = false,
-  containerClass = "flex flex-col items-center mb-8"
+  placeholder = "Pesquisar...",
+  containerClass = "relative max-w-md mx-auto",
+  showNavLinks = true
 } = Astro.props;
 ---
-
 <div class={containerClass} data-search-placeholder={placeholder}>
   <div class="w-full max-w-2xl mx-auto mb-4">
     <div class="relative flex justify-center">

@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+/* CSS-only Mobile Menu */
+.mobile-menu {
+  display: none;
+}
+
+#mobile-menu-toggle:checked ~ .mobile-menu {
+  display: block;
+}
+
 /* CSS Custom Properties for Pagefind using TailwindCSS theme */
 :root {
   --pagefind-ui-primary: theme("colors.blue.600");
@@ -20,7 +29,25 @@ body {
   --pagefind-ui-result-bg: theme("colors.white");
 }
 
-/* Search Highlight Styling */
+#mobile-menu-toggle:checked ~ .mobile-menu {
+  display: block;
+}
+:root {
+  --pagefind-ui-primary: theme("colors.blue.600");
+  --pagefind-ui-text: theme("colors.gray.800");
+  --pagefind-ui-background: theme("colors.white");
+  --pagefind-ui-border: theme("colors.gray.300");
+  --pagefind-ui-border-focus: theme("colors.blue.500");
+  --pagefind-ui-placeholder: theme("colors.gray.500");
+  --pagefind-ui-result-bg: theme("colors.white");
+  --pagefind-ui-result-shadow: theme("colors.gray.100");
+  --pagefind-ui-excerpt: theme("colors.gray.600");
+}
+body {
+  --pagefind-ui-text: theme("colors.gray.800");
+  --pagefind-ui-background: theme("colors.white");
+  --pagefind-ui-result-bg: theme("colors.white");
+}
 mark,
 .pagefind-ui__result-excerpt mark {
   background-color: theme("colors.yellow.200") !important;
@@ -55,7 +82,7 @@ mark,
   width: 100% !important;
   max-width: 600px !important;
   margin: 0 auto !important;
-  padding: 0.75rem 2.5rem 0.75rem 1rem !important;
+  padding: 0.75rem 2.5rem 0.75rem 2.5rem !important;
   font-size: 1rem !important;
   border-radius: theme("borderRadius.md") !important;
   border: 1px solid var(--pagefind-ui-border) !important;
@@ -64,7 +91,6 @@ mark,
   transition: all 0.2s ease !important;
   height: auto !important;
   font-weight: normal !important;
-  padding-left: 2.5rem !important;
 }
 
 .pagefind-ui__search-input:focus {
@@ -80,6 +106,16 @@ mark,
 }
 
 .pagefind-ui__form::before {
+  display: none !important;
+}
+
+/* Ensure form has proper relative positioning for button placement */
+.pagefind-ui__form {
+  position: relative !important;
+}
+
+/* Hide Pagefind's built-in clear button completely */
+.pagefind-ui__search-clear {
   display: none !important;
 }
 
@@ -159,4 +195,61 @@ mark,
   outline: 2px solid var(--pagefind-ui-primary) !important;
   outline-offset: 2px !important;
   border-radius: theme("borderRadius.sm") !important;
+}
+
+/* Custom utility classes for common patterns */
+.stats-container {
+  @apply flex justify-center gap-8 mb-8 p-6 bg-white border border-gray-200 rounded-lg;
+}
+
+.stats-container--simple {
+  @apply flex justify-center gap-8 mb-8 flex-wrap;
+}
+
+.stat-card {
+  @apply text-center;
+}
+
+.stat-value {
+  @apply text-4xl font-bold text-blue-600 mb-1;
+}
+
+.stat-value--medium {
+  @apply text-2xl font-bold text-blue-600 mb-1;
+}
+
+.stat-label {
+  @apply text-sm text-gray-500;
+}
+
+.dataset-card {
+  @apply flex flex-col md:flex-row md:justify-between md:items-center p-6 bg-white border border-gray-200 rounded-lg transition-transform hover:-translate-y-0.5 hover:shadow-lg;
+}
+
+.page-header {
+  @apply text-center mb-12;
+}
+
+.page-title {
+  @apply text-4xl font-bold text-gray-800 mb-4;
+}
+
+.page-title--medium {
+  @apply text-3xl font-bold text-gray-800 mb-2;
+}
+
+.page-subtitle {
+  @apply text-lg text-gray-600 mb-8;
+}
+
+.page-subtitle--small {
+  @apply text-gray-600;
+}
+
+.project-badge {
+  @apply inline-block px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full;
+}
+
+.project-badge--small {
+  @apply inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full;
 }

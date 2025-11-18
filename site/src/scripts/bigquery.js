@@ -1,416 +1,154 @@
 /**
- * @fileoverview Optimized BigQuery SQL query generator with high-performance Shiki highlighting
- * Uses fine-grained imports and JavaScript regex engine for minimal bundle size
+ * @fileoverview Simplified BigQuery SQL query generator with Shiki highlighting
  */
 
 import { createHighlighterCore } from 'shiki/core';
 import { createJavaScriptRegexEngine } from 'shiki/engine/javascript';
 
 const CONFIG = {
-    selectors: {
-        queryButton: '[data-copy-query]',
-        queryPreview: '.query-preview',
-        codeContainer: '.query-code-container',
-        copyButton: '.copy-query-button',
-        closeButton: '.query-preview-close',
-        selectAllCheckbox: '.table-select-all-checkbox',
-        columnCheckbox: '.column-checkbox'
-    },
-    cssClasses: {
-        previewWindow: 'query-preview',
-        previewContent: 'bg-gray-900 rounded-lg p-4 mt-3 border border-gray-700',
-        header: 'flex items-center justify-between mb-2',
-        title: 'text-gray-300 text-sm font-medium',
-        buttonGroup: 'flex items-center gap-2',
-        copyButton: 'copy-query-button bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 rounded flex items-center gap-1 cursor-copy',
-        closeButton: 'query-preview-close text-gray-400 hover:text-gray-200 text-lg px-2 py-1 hover:bg-gray-800 rounded',
-        codeContainer: 'query-code-container bg-gray-900 rounded overflow-x-auto border border-gray-700'
-    },
-    icons: {
-        copy: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-             <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
-             <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
-           </svg>`,
-        check: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="20,6 9,17 4,12"></polyline>
-            </svg>`,
-        close: '&times;'
-    },
     messages: {
-        title: 'Query Generated:',
         copy: 'Copiar',
         copied: 'Copiado!',
-        copyError: 'Erro ao copiar query para clipboard',
-        highlightingFailed: 'Shiki highlighting failed, falling back to plain text:'
-    },
-    styling: {
-        codeStyle: 'background-color: transparent; padding: 1rem; margin: 0;',
-        fallbackStyle: 'background-color: transparent; color: #e5e7eb; padding: 1rem; margin: 0; font-family: \'Courier New\', monospace;'
+        copyError: 'Erro ao copiar query'
     },
     timing: {
         copyFeedbackDuration: 2000
+    },
+    icons: {
+        copy: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>',
+        check: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check"><path d="m9 12 2 2 4-4"/></svg>'
     }
 };
 
-
-/**
- * Cached highlighter promise for performance optimization
- * Uses fine-grained imports and JavaScript engine for better performance
- */
 const highlighterPromise = createHighlighterCore({
-    themes: [
-        import('@shikijs/themes/github-dark')
-    ],
-    langs: [
-        import('@shikijs/langs/sql')
-    ],
+    themes: [import('@shikijs/themes/github-dark')],
+    langs: [import('@shikijs/langs/sql')],
     engine: createJavaScriptRegexEngine()
 });
 
 /**
- * Gets the cached Shiki highlighter instance
- * Uses singleton pattern with lazy loading for optimal performance
- * @returns {Promise<Object>} The Shiki highlighter instance
- */
-async function getHighlighter() {
-    return await highlighterPromise;
-}
-
-
-/**
- * Highlights SQL code using Shiki with fallback to plain text
+ * Highlights SQL code using Shiki syntax highlighter
  * @param {string} sqlCode - The SQL code to highlight
- * @returns {Promise<string>} The highlighted HTML
+ * @returns {Promise<string>} The highlighted HTML code
  */
 async function highlightSQL(sqlCode) {
     try {
-        const highlighter = await getHighlighter();
+        const highlighter = await highlighterPromise;
         return highlighter.codeToHtml(sqlCode, {
             lang: 'sql',
             theme: 'github-dark',
-            transformers: [
-                {
-                    pre(node) {
-                        node.properties.style = CONFIG.styling.codeStyle;
-                    }
+            transformers: [{
+                pre(node) {
+                    node.properties.style = 'background-color: transparent; padding: 1rem; margin: 0;';
                 }
-            ]
+            }]
         });
     } catch (error) {
-        console.warn(CONFIG.messages.highlightingFailed, error);
-        return createPlainTextHTML(sqlCode);
+        console.warn('Syntax highlighting failed:', error);
+        return `<pre style="background-color: transparent; color: #e5e7eb; padding: 1rem; margin: 0; font-family: 'Courier New', monospace;"><code>${sqlCode.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>`;
     }
 }
 
-
 /**
- * Filters out nested columns when parent columns exist
- * @param {string[]} columnNames - Array of column names
- * @returns {string[]} Filtered column names
+ * Generates BigQuery SQL from table metadata
+ * @param {string} projectKey - The GCP project identifier
+ * @param {string} datasetName - The BigQuery dataset name
+ * @param {string} tableName - The BigQuery table name
+ * @param {string[]|null} columnNames - Array of column names to select, or null for SELECT *
+ * @returns {string} The generated SQL query string
  */
-function filterNestedColumns(columnNames) {
-    return columnNames.filter(columnName => {
+function generateQuery(projectKey, datasetName, tableName, columnNames) {
+    if (!columnNames || columnNames.length === 0) {
+        return `SELECT\n  *\nFROM \`${projectKey}.${datasetName}.${tableName}\`\nLIMIT 100`;
+    }
+
+    const filteredColumns = columnNames.filter(columnName => {
         if (columnName.includes('.')) {
             const parentColumnName = columnName.split('.')[0];
             return !columnNames.includes(parentColumnName);
         }
         return true;
     });
-}
 
-
-/**
- * Generates a BigQuery SELECT statement from table metadata
- * @param {string} projectKey - The GCP project key
- * @param {string} datasetName - The dataset name
- * @param {string} tableName - The table name
- * @param {string[]} columnNames - Array of column names
- * @returns {string} The formatted SQL query
- */
-function generateQuery(projectKey, datasetName, tableName, columnNames) {
-    if (!columnNames || columnNames.length === 0) {
-        return `SELECT
-  *
-FROM \`${projectKey}.${datasetName}.${tableName}\`
-LIMIT 100`;
-    }
-
-    if (columnNames.length === 1 && columnNames[0] === '*') {
-        return `SELECT
-  *
-FROM \`${projectKey}.${datasetName}.${tableName}\`
-LIMIT 100`;
-    }
-
-    const filteredColumns = filterNestedColumns(columnNames);
     const formattedColumns = filteredColumns.join(',\n  ');
-
-    return `SELECT
-  ${formattedColumns}
-FROM \`${projectKey}.${datasetName}.${tableName}\`
-LIMIT 100`;
+    return `SELECT\n  ${formattedColumns}\nFROM \`${projectKey}.${datasetName}.${tableName}\`\nLIMIT 100`;
 }
 
-
 /**
- * Shows successful copy feedback on button
- * @param {HTMLElement} button - Button to update
- */
-function showCopySuccess(button) {
-    const originalHTML = button.innerHTML;
-
-    button.innerHTML = `${CONFIG.icons.check} ${CONFIG.messages.copied}`;
-
-    setTimeout(() => {
-        button.innerHTML = originalHTML;
-    }, CONFIG.timing.copyFeedbackDuration);
-}
-
-
-/**
- * Copies text to clipboard and provides visual feedback
- * @param {string} text - Text to copy
- * @param {HTMLElement} button - Button element to update with feedback
+ * Copies text to clipboard with visual feedback
+ * @param {string} text - The text to copy to clipboard
+ * @param {HTMLButtonElement} button - The button element to show feedback on
+ * @returns {Promise<void>}
  */
 async function copyToClipboard(text, button) {
     try {
         await navigator.clipboard.writeText(text);
-        showCopySuccess(button);
+        const originalHTML = button.innerHTML;
+        button.innerHTML = `${CONFIG.icons.check} ${CONFIG.messages.copied}`;
+        setTimeout(() => {
+            button.innerHTML = originalHTML;
+        }, CONFIG.timing.copyFeedbackDuration);
     } catch (error) {
         console.error('Copy error:', error);
         alert(CONFIG.messages.copyError);
     }
 }
 
-
 /**
- * Enhances code container with syntax highlighting
- * @param {HTMLElement} container - Container element
- * @param {string} code - Code to highlight
+ * Shows query preview window with highlighted SQL
+ * @param {string} sqlQuery - The SQL query to display
+ * @param {HTMLButtonElement} triggerButton - The button that triggered the preview
+ * @returns {Promise<void>}
  */
-async function enhanceWithSyntaxHighlighting(container, code) {
-    try {
-        const highlightedHTML = await highlightSQL(code);
-        container.innerHTML = highlightedHTML;
-    } catch (error) {
-        console.warn('Failed to enhance with syntax highlighting:', error);
+async function showQueryPreview(sqlQuery, triggerButton) {
+    const existingWindow = triggerButton.parentNode.parentNode.querySelector('.query-preview');
+    if (existingWindow) {
+        existingWindow.remove();
     }
-}
 
-
-/**
- * Creates a button with icon and text
- * @param {string} className - CSS classes for the button
- * @param {string} icon - SVG icon HTML
- * @param {string} text - Button text
- * @param {Function} onClick - Click handler function
- * @returns {HTMLElement} The created button element
- */
-function createIconButton(className, icon, text, onClick) {
-    const button = document.createElement('button');
-    button.className = className;
-    button.innerHTML = `${icon} ${text}`;
-    if (onClick) {
-        button.onclick = onClick;
-    }
-    return button;
-}
-
-
-/**
- * Creates a code preview container with syntax highlighting
- * @param {string} code - Code to display
- * @returns {HTMLElement} The code container element
- */
-function createCodePreview(code) {
-    const container = document.createElement('div');
-    container.className = CONFIG.cssClasses.codeContainer;
-    container.innerHTML = createPlainTextHTML(code);
-
-
-    enhanceWithSyntaxHighlighting(container, code);
-
-    return container;
-}
-
-
-/**
- * Finds existing preview window in the DOM
- * @param {HTMLElement} buttonContainer - Container to search in
- * @returns {HTMLElement|null} Existing window or null
- */
-function findExistingWindow(buttonContainer) {
-    return buttonContainer.parentNode.querySelector(CONFIG.selectors.queryPreview);
-}
-
-
-/**
- * Updates existing preview window with new query
- * @param {HTMLElement} existingWindow - Existing window element
- * @param {string} sqlQuery - New SQL query
- * @returns {HTMLElement} Updated window element
- */
-function updateExistingWindow(existingWindow, sqlQuery) {
-    const codeContainer = existingWindow.querySelector(CONFIG.selectors.codeContainer);
-    const copyButton = existingWindow.querySelector(CONFIG.selectors.copyButton);
-
-    codeContainer.innerHTML = createPlainTextHTML(sqlQuery);
-    copyButton.onclick = () => copyToClipboard(sqlQuery, copyButton);
-
-    enhanceWithSyntaxHighlighting(codeContainer, sqlQuery);
-
-    return existingWindow;
-}
-
-
-/**
- * Creates the basic window structure
- * @returns {Object} Object containing window and content elements
- */
-function createWindowStructure() {
     const previewWindow = document.createElement('div');
-    previewWindow.className = CONFIG.cssClasses.previewWindow;
+    previewWindow.className = 'query-preview bg-gray-900 rounded-lg p-4 mt-4 border border-gray-700';
 
-    const previewContent = document.createElement('div');
-    previewContent.className = CONFIG.cssClasses.previewContent;
+    const header = document.createElement('div');
+    header.className = 'flex items-center justify-between mb-2';
 
-    const headerSection = document.createElement('div');
-    headerSection.className = CONFIG.cssClasses.header;
-
-    const titleLabel = document.createElement('span');
-    titleLabel.className = CONFIG.cssClasses.title;
-    titleLabel.textContent = CONFIG.messages.title;
+    const title = document.createElement('span');
+    title.className = 'text-gray-300 text-sm font-medium';
+    title.textContent = 'Query Gerada:';
 
     const buttonGroup = document.createElement('div');
-    buttonGroup.className = CONFIG.cssClasses.buttonGroup;
+    buttonGroup.className = 'flex items-center gap-2';
 
-    return {
-        previewWindow,
-        previewContent,
-        headerSection,
-        titleLabel,
-        buttonGroup
-    };
-}
+    const copyButton = document.createElement('button');
+    copyButton.className = 'bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 rounded flex items-center gap-1';
+    copyButton.innerHTML = `${CONFIG.icons.copy} ${CONFIG.messages.copy}`;
+    copyButton.onclick = () => copyToClipboard(sqlQuery, copyButton);
 
+    const closeButton = document.createElement('button');
+    closeButton.className = 'text-gray-400 hover:text-gray-200 text-lg px-2 py-1 hover:bg-gray-800 rounded';
+    closeButton.innerHTML = '×';
+    closeButton.onclick = () => previewWindow.remove();
 
-/**
- * Creates window components (buttons and code container)
- * @param {string} sqlQuery - SQL query for the code container
- * @returns {Object} Object containing created components
- */
-function createWindowComponents(sqlQuery) {
-    const copyButton = createIconButton(
-        CONFIG.cssClasses.copyButton,
-        CONFIG.icons.copy,
-        CONFIG.messages.copy,
-        null
-    );
+    const codeContainer = document.createElement('div');
+    codeContainer.className = 'bg-gray-900 rounded overflow-x-auto border border-gray-700';
+    codeContainer.innerHTML = `<pre style="background-color: transparent; color: #e5e7eb; padding: 1rem; margin: 0;"><code>${sqlQuery}</code></pre>`;
 
-    const closeButton = createIconButton(
-        CONFIG.cssClasses.closeButton,
-        CONFIG.icons.close,
-        '',
-        null
-    );
-
-    const codeContainer = createCodePreview(sqlQuery);
-
-    return { copyButton, closeButton, codeContainer };
-}
-
-
-/**
- * Assembles the window components into the complete structure
- * @param {Object} structure - Window structure components
- * @param {HTMLElement} copyButton - Copy button element
- * @param {HTMLElement} closeButton - Close button element
- * @param {HTMLElement} codeContainer - Code container element
- */
-function assembleWindow(structure, copyButton, closeButton, codeContainer) {
-    const { previewWindow, previewContent, headerSection, titleLabel, buttonGroup } = structure;
+    highlightSQL(sqlQuery).then(highlightedHTML => {
+        codeContainer.innerHTML = highlightedHTML;
+    });
 
     buttonGroup.appendChild(copyButton);
     buttonGroup.appendChild(closeButton);
-    headerSection.appendChild(titleLabel);
-    headerSection.appendChild(buttonGroup);
-    previewContent.appendChild(headerSection);
-    previewContent.appendChild(codeContainer);
-    previewWindow.appendChild(previewContent);
+    header.appendChild(title);
+    header.appendChild(buttonGroup);
+    previewWindow.appendChild(header);
+    previewWindow.appendChild(codeContainer);
+
+    triggerButton.parentNode.parentNode.insertBefore(previewWindow, triggerButton.parentNode.nextSibling);
 }
 
-
 /**
- * Inserts window into DOM
- * @param {HTMLElement} window - Window element to insert
- * @param {HTMLElement} buttonContainer - Reference container for insertion
- */
-function insertIntoDOM(window, buttonContainer) {
-    buttonContainer.parentNode.insertBefore(window, buttonContainer.nextSibling);
-}
-
-
-/**
- * Attaches event listeners to window components
- * @param {HTMLElement} closeButton - Close button element
- * @param {HTMLElement} window - Window element
- * @param {HTMLElement} copyButton - Copy button element
- * @param {string} sqlQuery - SQL query for copy functionality
- */
-function attachEventListeners(closeButton, window, copyButton, sqlQuery) {
-    closeButton.addEventListener('click', () => window.remove());
-    copyButton.onclick = () => copyToClipboard(sqlQuery, copyButton);
-}
-
-
-/**
- * Creates a new preview window
- * @param {string} sqlQuery - SQL query to display
- * @param {HTMLElement} buttonContainer - Container to insert window after
- * @returns {HTMLElement} New window element
- */
-function createNewWindow(sqlQuery, buttonContainer) {
-    const windowStructure = createWindowStructure();
-    const { copyButton, closeButton, codeContainer } = createWindowComponents(sqlQuery);
-
-    assembleWindow(windowStructure, copyButton, closeButton, codeContainer);
-    insertIntoDOM(windowStructure.previewWindow, buttonContainer);
-    attachEventListeners(closeButton, windowStructure.previewWindow, copyButton, sqlQuery);
-
-    return windowStructure.previewWindow;
-}
-
-
-/**
- * Creates or updates a query preview window
- * @param {string} sqlQuery - The SQL query to display
- * @param {HTMLElement} triggerButton - The button that triggered the preview
- * @returns {HTMLElement} The preview window element
- */
-function createOrUpdateQueryPreview(sqlQuery, triggerButton) {
-    const buttonContainer = triggerButton.parentNode;
-    const existingWindow = findExistingWindow(buttonContainer);
-
-    if (existingWindow) {
-        return updateExistingWindow(existingWindow, sqlQuery);
-    }
-
-    return createNewWindow(sqlQuery, buttonContainer);
-}
-
-
-/**
- * Shows or updates a query preview window
- * @param {string} sqlQuery - SQL query to display
- * @param {HTMLElement} triggerButton - Button that triggered the preview
- */
-async function showPreview(sqlQuery, triggerButton) {
-    createOrUpdateQueryPreview(sqlQuery, triggerButton);
-}
-
-
-/**
- * Gets selected column names for a specific table
+ * Gets selected column names for a table
  * @param {string} tableName - The table name to get selected columns for
  * @returns {string[]} Array of selected column names
  */
@@ -419,78 +157,62 @@ function getSelectedColumns(tableName) {
     return Array.from(checkboxes).map(checkbox => checkbox.dataset.column);
 }
 
-
 /**
- * Extracts data attributes from button element and gets selected columns
- * @param {HTMLElement} button - Button element with data attributes
- * @returns {Object} Extracted data with selected columns
+ * Handles query generation button clicks
+ * @param {HTMLButtonElement} button - The button element that was clicked
+ * @returns {Promise<void>}
  */
-function extractButtonData(button) {
+async function handleQueryGeneration(button) {
     const tableName = button.dataset.table;
     const selectedColumns = getSelectedColumns(tableName);
 
-    return {
-        projectKey: button.dataset.project,
-        datasetName: button.dataset.dataset,
-        tableName: tableName,
-        columnNames: selectedColumns
-    };
+    const query = generateQuery(
+        button.dataset.project,
+        button.dataset.dataset,
+        tableName,
+        selectedColumns
+    );
+
+    await showQueryPreview(query, button);
 }
 
-
 /**
- * Handles query generation button clicks
- * @param {HTMLElement} button - The clicked button
+ * Updates checkbox visual state based on checked status
+ * @param {HTMLInputElement} checkbox - The checkbox element to update visuals for
+ * @returns {void}
  */
-async function handleQueryGeneration(button) {
-    try {
-        const { projectKey, datasetName, tableName, columnNames } = extractButtonData(button);
-        const query = generateQuery(projectKey, datasetName, tableName, columnNames);
-        await showPreview(query, button);
-    } catch (error) {
-        console.error('Error generating query:', error);
-    }
-}
-
-
-/**
- * Updates visual feedback for column selection
- * @param {HTMLElement} checkbox - The checkbox that was toggled
- */
-function updateColumnVisualState(checkbox) {
+function updateCheckboxVisuals(checkbox) {
     const row = checkbox.closest('tr');
     if (!row) return;
 
     if (checkbox.checked) {
-        row.classList.add('bg-blue-50');
+        row.classList.add('bg-blue-50', 'hover:bg-blue-100');
         row.classList.remove('hover:bg-gray-50');
-        row.classList.add('hover:bg-blue-100');
     } else {
         row.classList.remove('bg-blue-50', 'hover:bg-blue-100');
         row.classList.add('hover:bg-gray-50');
     }
 }
 
-
 /**
- * Handles select all checkbox functionality
- * @param {HTMLElement} selectAllCheckbox - The select all checkbox
+ * Handles select all functionality for table columns
+ * @param {HTMLInputElement} selectAllCheckbox - The "select all" checkbox element
+ * @returns {void}
  */
-function handleSelectAllToggle(selectAllCheckbox) {
+function handleSelectAll(selectAllCheckbox) {
     const tableName = selectAllCheckbox.dataset.table;
     const columnCheckboxes = document.querySelectorAll(`.column-checkbox[data-table="${tableName}"]`);
-    const isChecked = selectAllCheckbox.checked;
 
     columnCheckboxes.forEach(checkbox => {
-        checkbox.checked = isChecked;
-        updateColumnVisualState(checkbox);
+        checkbox.checked = selectAllCheckbox.checked;
+        updateCheckboxVisuals(checkbox);
     });
 }
-
 
 /**
  * Updates select all checkbox state based on individual column selections
  * @param {string} tableName - The table name to update select all state for
+ * @returns {void}
  */
 function updateSelectAllState(tableName) {
     const selectAllCheckbox = document.querySelector(`.table-select-all-checkbox[data-table="${tableName}"]`);
@@ -511,96 +233,43 @@ function updateSelectAllState(tableName) {
     }
 }
 
-
 /**
- * Attaches click handlers to query generation buttons and checkbox functionality
+ * Initializes BigQuery functionality by setting up event listeners
+ * @returns {void}
  */
-function attachClickHandlers() {
+function init() {
     document.addEventListener('click', (event) => {
-        const queryButton = event.target.closest(CONFIG.selectors.queryButton);
+        const queryButton = event.target.closest('[data-copy-query]');
         if (queryButton) {
             handleQueryGeneration(queryButton);
         }
     });
 
     document.addEventListener('change', (event) => {
-        const selectAllCheckbox = event.target.closest(CONFIG.selectors.selectAllCheckbox);
+        const selectAllCheckbox = event.target.closest('.table-select-all-checkbox');
         if (selectAllCheckbox) {
-            handleSelectAllToggle(selectAllCheckbox);
+            handleSelectAll(selectAllCheckbox);
             return;
         }
 
-        const columnCheckbox = event.target.closest(CONFIG.selectors.columnCheckbox);
+        const columnCheckbox = event.target.closest('.column-checkbox');
         if (columnCheckbox) {
-            const tableName = columnCheckbox.dataset.table;
-            updateColumnVisualState(columnCheckbox);
-            updateSelectAllState(tableName);
+            updateCheckboxVisuals(columnCheckbox);
+            updateSelectAllState(columnCheckbox.dataset.table);
         }
     });
-}
 
-
-/**
- * Initializes checkbox states for all tables
- */
-function initializeCheckboxStates() {
-    const selectAllCheckboxes = document.querySelectorAll(CONFIG.selectors.selectAllCheckbox);
-    selectAllCheckboxes.forEach(checkbox => {
-        const tableName = checkbox.dataset.table;
-        updateSelectAllState(tableName);
+    document.querySelectorAll('.table-select-all-checkbox').forEach(checkbox => {
+        updateSelectAllState(checkbox.dataset.table);
     });
 
-    const columnCheckboxes = document.querySelectorAll(CONFIG.selectors.columnCheckbox);
-    columnCheckboxes.forEach(checkbox => {
-        updateColumnVisualState(checkbox);
+    document.querySelectorAll('.column-checkbox').forEach(checkbox => {
+        updateCheckboxVisuals(checkbox);
     });
-}
-
-
-/**
- * Initializes all event handlers and checkbox states
- */
-function initializeEventHandlers() {
-    attachClickHandlers();
-    initializeCheckboxStates();
-}
-
-
-/**
- * Escapes HTML special characters
- * @param {string} code - Code to escape
- * @returns {string} Escaped code
- */
-function escapeHTMLCharacters(code) {
-    return code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-
-/**
- * Creates plain text HTML with proper escaping
- * @param {string} code - Code to convert to HTML
- * @returns {string} HTML string with escaped content
- */
-function createPlainTextHTML(code) {
-    const escapedCode = escapeHTMLCharacters(code);
-    return `<pre style="${CONFIG.styling.fallbackStyle}"><code>${escapedCode}</code></pre>`;
-}
-
-
-/**
- * Initializes the BigQuery application
- */
-function initializeBigQueryApp() {
-    initializeEventHandlers();
-}
-
-
-function initializeApplication() {
-    initializeBigQueryApp();
 }
 
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeApplication);
+    document.addEventListener('DOMContentLoaded', init);
 } else {
-    initializeApplication();
+    init();
 }

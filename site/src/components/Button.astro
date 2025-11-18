@@ -1,0 +1,46 @@
+---
+import { getButtonClasses } from '../scripts/styling.js';
+import { getButtonDataAttributes } from '../scripts/helpers.js';
+
+const {
+  variant = 'primary',
+  size = 'md',
+  href,
+  icon: Icon,
+  iconPosition = 'left',
+  className = "",
+  type = 'button',
+  disabled = false,
+  target,
+  rel,
+  ...dataAttributes
+} = Astro.props;
+
+const buttonClasses = `${getButtonClasses(variant, size)} ${className} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`;
+const cleanDataAttributes = getButtonDataAttributes(dataAttributes);
+---
+
+{href ? (
+  <a
+    href={href}
+    class={buttonClasses}
+    target={target}
+    rel={rel}
+    {...cleanDataAttributes}
+  >
+    {Icon && iconPosition === 'left' && <Icon size={16} />}
+    <slot />
+    {Icon && iconPosition === 'right' && <Icon size={16} />}
+  </a>
+) : (
+  <button
+    type={type}
+    class={buttonClasses}
+    disabled={disabled}
+    {...cleanDataAttributes}
+  >
+    {Icon && iconPosition === 'left' && <Icon size={16} />}
+    <slot />
+    {Icon && iconPosition === 'right' && <Icon size={16} />}
+  </button>
+)}

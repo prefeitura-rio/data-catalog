@@ -1,20 +1,28 @@
 ---
 import { ArrowLeft, Code, ExternalLink } from '@lucide/astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { getStaticPaths, getTotalColumns } from '../utils/schema.js';
-import { prepareDatasetTablesForRender } from '../utils/rendering.js';
+import Button from '../components/Button.astro';
+import StatsDisplay from '../components/StatsDisplay.astro';
+import { getStaticPaths } from '../scripts/schema.js';
+import { prepareDatasetTablesForRender } from '../scripts/rendering.js';
+import { getDatasetPageStats } from '../scripts/stats.js';
 
 export { getStaticPaths };
 
 const { dataset } = Astro.props;
 const tableRenderData = prepareDatasetTablesForRender(dataset.tables);
+const stats = getDatasetPageStats(dataset.tables);
 ---
 <BaseLayout title={dataset.name}>
 	<header data-pagefind-body>
 		<div class="mb-6">
-			<a href="/datasets/" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-blue-600 rounded-md hover:bg-blue-600 hover:text-white transition-all hover:-translate-x-0.5 text-sm">
+			<Button
+				variant="back"
+				href="/datasets/"
+				class="text-sm"
+			>
 				<ArrowLeft /> Voltar
-			</a>
+			</Button>
 		</div>
 
 		<div class="text-center">
@@ -28,18 +36,7 @@ const tableRenderData = prepareDatasetTablesForRender(dataset.tables);
 				{dataset.description || 'Sem descrição disponível'}
 			</p>
 
-			<div class="flex justify-center gap-8 mb-8">
-				<div class="text-center">
-					<div class="text-2xl font-bold text-blue-600 mb-1">{dataset.tables.length}</div>
-					<div class="text-sm text-gray-500">Tabela{dataset.tables.length !== 1 ? 's' : ''}</div>
-				</div>
-				<div class="text-center">
-					<div class="text-2xl font-bold text-blue-600 mb-1">
-						{getTotalColumns(dataset.tables)}
-					</div>
-					<div class="text-sm text-gray-500">Colunas Totais</div>
-				</div>
-			</div>
+			<StatsDisplay stats={stats} />
 		</div>
 	</header>
 	{tableRenderData.map((tableData) => (
@@ -52,27 +49,29 @@ const tableRenderData = prepareDatasetTablesForRender(dataset.tables);
 				</p>
 
 				<div class="flex gap-3 mt-4">
-					<button
+					<Button
+						variant="primary"
 						data-copy-query
 						data-project={dataset.project}
 						data-dataset={dataset.name}
 						data-table={tableData.name}
 						data-columns={JSON.stringify(tableData.schemaEntries.map(col => col.name))}
-						class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm cursor-pointer"
+						class="text-sm cursor-pointer"
 					>
 						<Code size={16} />
 						Gerar Query
-					</button>
+					</Button>
 
-					<a
+					<Button
+						variant="secondary"
 						href={`https://console.cloud.google.com/bigquery?project=${dataset.project}&ws=!1m5!1m4!4m3!1s${dataset.project}!2s${dataset.name}!3s${tableData.name}`}
 						target="_blank"
 						rel="noopener noreferrer"
-						class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-blue-600 text-blue-600 rounded-md hover:bg-blue-600 hover:text-white transition-colors text-sm"
+						class="text-sm"
 					>
 						<ExternalLink size={16} />
 						Abrir no BigQuery
-					</a>
+					</Button>
 				</div>
 			</header>
 

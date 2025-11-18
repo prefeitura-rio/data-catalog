@@ -1,0 +1,23 @@
+---
+import { isLinkActive, getNavLinkClasses } from '../scripts/navigation.js';
+
+const {
+  href,
+  label,
+  icon: Icon,
+  isMobile = false,
+  currentPath,
+  className = ""
+} = Astro.props;
+
+const isActive = isLinkActive(href, currentPath);
+const iconMargin = isMobile ? "mr-3" : "mr-2";
+---
+
+<a
+  href={href}
+  class={`${getNavLinkClasses(isActive, isMobile)} ${className}`}
+>
+  {Icon && <Icon class={`w-4 h-4 ${iconMargin}`} />}
+  {label}
+</a>

@@ -1,0 +1,28 @@
+---
+import { formatStatValue } from '../scripts/formatting.js';
+
+interface StatItem {
+  value: number;
+  label: string;
+  className?: string;
+}
+
+const {
+  stats,
+  containerClass = "flex justify-center gap-8 mb-8 p-6 bg-white border border-gray-200 rounded-lg",
+  statClass = "text-center"
+} = Astro.props;
+---
+
+<div class={containerClass}>
+  {stats.map((stat: StatItem) => (
+    <div class={`${statClass} ${stat.className || ''}`}>
+      <div class="text-4xl font-bold text-blue-600 mb-1">
+        {formatStatValue(stat.value)}
+      </div>
+      <div class="text-sm text-gray-500">
+        {stat.label}
+      </div>
+    </div>
+  ))}
+</div>

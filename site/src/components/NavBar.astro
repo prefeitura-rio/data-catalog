@@ -1,16 +1,14 @@
 ---
 import { House, List, Menu } from '@lucide/astro';
+import NavLink from './NavLink.astro';
+import { shouldDatasetsBeActive } from '../scripts/navigation.js';
 
-const currentPath = Astro.url.pathname;
-
-function isActive(path: string): boolean {
-  if (path === '/' && currentPath === '/') return true;
-  if (path !== '/' && currentPath.startsWith(path)) return true;
-  return false;
-}
+const currentPath: string = Astro.url.pathname;
 ---
 <nav class="bg-white shadow-sm border-b border-gray-200">
   <div class="container mx-auto px-4 max-w-6xl">
+    <input type="checkbox" id="mobile-menu-toggle" class="hidden" />
+
     <div class="flex justify-between items-center h-16">
       <div class="flex items-center space-x-4">
         <a href="/" class="flex items-center">
@@ -19,74 +17,48 @@ function isActive(path: string): boolean {
       </div>
 
       <div class="hidden md:flex items-center space-x-8">
-        <a
+        <NavLink
           href="/"
-          class={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-            isActive('/') && currentPath === '/'
-              ? 'text-blue-600 bg-blue-50'
-              : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
-          }`}
-        >
-          <House class="w-4 h-4 mr-2" />
-          Início
-        </a>
-
-        <a
+          label="Início"
+          icon={House}
+          currentPath={currentPath}
+        />
+        <NavLink
           href="/datasets/"
-          class={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-            isActive('/datasets/') || (currentPath !== '/' && currentPath !== '/datasets/' && currentPath !== '/datasets')
-              ? 'text-blue-600 bg-blue-50'
-              : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
-          }`}
-        >
-          <List class="w-4 h-4 mr-2" />
-          Datasets
-        </a>
+          label="Datasets"
+          icon={List}
+          currentPath={shouldDatasetsBeActive(currentPath) ? "/datasets/" : currentPath}
+        />
       </div>
 
       <div class="md:hidden">
-        <button
-          type="button"
-          id="mobile-menu-button"
-          class="inline-flex items-center justify-center p-2 rounded-md text-gray-600 hover:text-blue-600 hover:bg-gray-50 transition-colors"
-          aria-expanded="false"
+        <label
+          for="mobile-menu-toggle"
+          class="inline-flex items-center justify-center p-2 rounded-md text-gray-600 hover:text-blue-600 hover:bg-gray-50 transition-colors cursor-pointer"
         >
           <span class="sr-only">Abrir menu</span>
           <Menu class="w-6 h-6" />
-        </button>
+        </label>
       </div>
     </div>
 
-    <div class="md:hidden" id="mobile-menu" style="display: none;">
+    <div class="md:hidden mobile-menu">
       <div class="px-2 pt-2 pb-3 space-y-1 border-t border-gray-200">
-        <a
+        <NavLink
           href="/"
-          class={`flex items-center px-3 py-2 text-base font-medium rounded-md transition-colors ${
-            isActive('/') && currentPath === '/'
-              ? 'text-blue-600 bg-blue-50'
-              : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
-          }`}
-        >
-          <House class="w-4 h-4 mr-3" />
-          Início
-        </a>
-
-        <a
+          label="Início"
+          icon={House}
+          currentPath={currentPath}
+          isMobile={true}
+        />
+        <NavLink
           href="/datasets/"
-          class={`flex items-center px-3 py-2 text-base font-medium rounded-md transition-colors ${
-            isActive('/datasets/') || (currentPath !== '/' && currentPath !== '/datasets/' && currentPath !== '/datasets')
-              ? 'text-blue-600 bg-blue-50'
-              : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
-          }`}
-        >
-          <List class="w-4 h-4 mr-3" />
-          Datasets
-        </a>
+          label="Datasets"
+          icon={List}
+          currentPath={shouldDatasetsBeActive(currentPath) ? "/datasets/" : currentPath}
+          isMobile={true}
+        />
       </div>
     </div>
   </div>
 </nav>
-
-<script>
-import '../scripts/mobile-menu.js';
-</script>

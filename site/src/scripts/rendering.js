@@ -1,4 +1,3 @@
-/* Table and dataset rendering utilities */
 import { formatSchema } from './schema.js';
 
 /**
@@ -36,5 +35,5 @@ export function prepareTableForRender(table) {
  * @returns {TableRenderData[]} Array of processed table data ready for rendering
  */
 export function prepareDatasetTablesForRender(tables) {
-    return tables.map((table /** @type {Table} */) => prepareTableForRender(table));
+    return tables.map((table) => prepareTableForRender(table));
 }

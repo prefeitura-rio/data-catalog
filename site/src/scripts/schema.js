@@ -1,4 +1,3 @@
-/* Schema formatting and processing utilities */
 import { getDatasetByName, getDatasetNames } from './catalog.js';
 
 /**
