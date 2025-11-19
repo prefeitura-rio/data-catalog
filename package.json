@@ -1,0 +1,12 @@
+{
+  "name": "data-catalog",
+  "version": "1.0.0",
+  "description": "A web-based data catalog built with Astro for browsing and exploring dataset schemas from BigQuery.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
