@@ -23,7 +23,7 @@ COPY --from=fetch-data /fetch/catalog.json ./catalog.json
 
 RUN npm run build
 
-FROM nginx:alpine AS runtime
+FROM nginx:alpine-slim AS runtime
 
 COPY ./nginx/nginx.conf /etc/nginx/nginx.conf
 
