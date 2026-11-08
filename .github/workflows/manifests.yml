@@ -1,0 +1,29 @@
+name: Manifests
+
+on:
+  pull_request:
+    branches: [master]
+  workflow_dispatch: {}
+
+concurrency:
+  group: manifests-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Tool versions
+        run: |
+          kubectl version --client
+          helm version --short
+      - name: Render k8s/ with the base-chart
+        run: |
+          kubectl kustomize --enable-helm k8s > rendered.yaml
+          grep -E '^kind:' rendered.yaml | sort | uniq -c
