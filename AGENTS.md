@@ -60,7 +60,8 @@ There are no automated tests. Prove what you change:
   The build reads `site/catalog.json` (ignored by git), the file the Dockerfile fetches
   from `gs://$GCS_BUCKET_NAME/catalog.json`; its content is a JSON-encoded string of the
   catalog object (`catalog.js` parses it twice). Without the bucket file, the build cannot
-  be proved locally; `npm run check` type-checks the Astro code.
+  be proved locally; `npm run check` type-checks the Astro code without it (it already
+  reports type errors on `master`, so compare its result before and after your change).
 - **Whole image**: `docker compose build` (needs `./credentials.json`, a service account
   key with read access to the bucket; never commit it).
 
