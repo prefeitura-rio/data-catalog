@@ -7,19 +7,22 @@ A web-based data catalog built with Astro for browsing and exploring dataset sch
 ```text
 /
 ├── Dockerfile             # Multi-stage Docker build with GCS integration
+├── docker-compose.yaml    # Local build with the GCP credentials as a build secret
 ├── nginx/
 │   └── nginx.conf         # Production nginx config with security headers
-├── data-catalog/          # Main application directory
-│   ├── public/
-│   │   └── js/            # Client-side JavaScript
+├── site/                  # Main application directory (Astro)
+│   ├── public/            # Static assets
 │   ├── src/
 │   │   ├── components/    # Reusable Astro components
 │   │   ├── layouts/       # Page layouts
 │   │   ├── pages/         # Routes and pages
-│   │   ├── styles/        # Global CSS
-│   │   └── utils/         # Data processing utilities
-│   ├── catalog.json       # Dataset definitions and schemas
+│   │   ├── scripts/       # Catalog loading and rendering utilities
+│   │   └── styles/        # Global CSS
+│   ├── catalog.json       # Dataset definitions and schemas (fetched from GCS, not versioned)
 │   └── package.json
+├── k8s/
+│   └── kustomization.yaml # Kubernetes manifests (Kustomize + base-chart), applied by Argo CD
+├── .github/workflows/     # deploy.yaml, manifests.yml and sast.yml
 └── .dockerignore          # Docker build optimization
 ```
 
@@ -93,7 +96,7 @@ Note: Since this is a static site, the catalog data is embedded at build time an
 
 ## Development Commands
 
-All commands are run from the `data-catalog/` directory:
+All commands are run from the `site/` directory:
 
 | Command                   | Action                                           |
 | :------------------------ | :----------------------------------------------- |
@@ -108,26 +111,44 @@ All commands are run from the `data-catalog/` directory:
 
 The application includes a production-ready Docker setup with automatic catalog data fetching from Google Cloud Storage.
 
-### Environment Variables
+### Build Arguments
 
-| Variable            | Default                 | Description                        |
-| ------------------- | ----------------------- | ---------------------------------- |
-| `GCS_BUCKET_NAME`   | `iplanrio-data-catalog` | GCS bucket containing catalog data |
-| `CATALOG_FILE_PATH` | `catalog.json`          | Path to catalog file within bucket |
+| Argument            | Default                                                     | Description                        |
+| ------------------- | ----------------------------------------------------------- | ---------------------------------- |
+| `GCS_BUCKET_NAME`   | none (`iplanrio-data-catalog` in `docker-compose.yaml`)     | GCS bucket containing catalog data |
+| `CATALOG_FILE_PATH` | `catalog.json`                                              | Path to catalog file within bucket |
+
+The GCP service account key is passed as the build secret `gcp-credentials`
+(`./credentials.json` in `docker-compose.yaml`; never commit it).
 
 ### CI/CD with GitHub Actions
 
-The repository includes automated deployment pipeline in `.github/workflows/deploy.yml`:
+The repository includes automated deployment pipeline in `.github/workflows/deploy.yaml`:
 
-- **Triggers**: Push to master branch + daily at 6 AM
+- **Triggers**: Push to master branch touching `site/`, `nginx/`, `Dockerfile` or the workflow, daily at 6 AM UTC, and manual dispatch
 - **Features**: Docker buildx, GitHub Container Registry, build caching
 - **Security**: Uses Docker secrets for GCP credentials
+- **Images**: `ghcr.io/prefeitura-rio/data-catalog:latest` and `:<sha>`
 
-Required secrets:
+Required repository settings:
 
-- `GOOGLE_CREDENTIALS_JSON` - Service account JSON key
+- Secret `GCP_SERVICE_ACCOUNT_JSON` - Service account JSON key with read access to the bucket
+- Variable `GCS_BUCKET_NAME` - GCS bucket containing the catalog data
 
 The workflow automatically uses the repository's GitHub Container Registry (ghcr.io) with built-in `GITHUB_TOKEN` authentication.
+
+Pull requests to master run `manifests.yml` (renders `k8s/` with `kubectl kustomize --enable-helm k8s`)
+and `sast.yml` (static analysis).
+
+## Kubernetes Deployment
+
+The manifests in `k8s/` use Kustomize with the [base-chart](https://github.com/prefeitura-rio/charts)
+Helm chart and are applied to production by Argo CD. The `master` branch is production: there is no staging.
+Render them locally (needs `kubectl` and `helm` on the `PATH`):
+
+```bash
+kubectl kustomize --enable-helm k8s
+```
 
 ### Production Features
 
