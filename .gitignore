@@ -1,3 +1,4 @@
 .env
 credentials.json
 site/catalog.json
+k8s/charts/
