@@ -35,6 +35,9 @@ import path from 'path';
  * @property {string} project - Project key this dataset belongs to
  * @property {string} description - Dataset description
  * @property {Table[]} tables - Array of tables with full schema information
+ * @property {string} [colabDatasetId] - Optional dataset identifier for the Colab notebook
+ * @property {string} [externalId] - Optional external dataset identifier
+ * @property {string} [resultId] - Optional result identifier
  */
 
 /**
