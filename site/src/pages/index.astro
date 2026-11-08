@@ -11,7 +11,7 @@ const latestUpdated = datasets.length ? new Date(Math.max(...datasets.map(d => d
 const recentDatasets = [...datasets].sort((a, b) => b.lastUpdated - a.lastUpdated).slice(0, 4);
 const largestDatasets = [...datasets].sort((a, b) => b.tableCount - a.tableCount).slice(0, 4);
 const projects = Object.entries(
-	datasets.reduce((acc, dataset) => {
+	datasets.reduce<Record<string, number>>((acc, dataset) => {
 		acc[dataset.project] = (acc[dataset.project] || 0) + 1;
 		return acc;
 	}, {})
