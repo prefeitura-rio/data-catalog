@@ -20,6 +20,7 @@ from a GCS bucket when the Docker image is built.
 ├── docker-compose.yaml    # local build with the GCP credentials as a build secret
 ├── k8s/kustomization.yaml # Kustomize + base-chart (Helm) manifests applied by Argo CD
 └── .github/workflows/
+    ├── check.yml          # pull request: cd site && npm ci && npm run check (astro check)
     ├── deploy.yaml        # push to master / daily cron: build and push the image to GHCR
     ├── manifests.yml      # pull request: render k8s/ with kubectl kustomize --enable-helm
     └── sast.yml           # pull request and push to master: SAST
@@ -60,8 +61,8 @@ There are no automated tests. Prove what you change:
   The build reads `site/catalog.json` (ignored by git), the file the Dockerfile fetches
   from `gs://$GCS_BUCKET_NAME/catalog.json`; its content is a JSON-encoded string of the
   catalog object (`catalog.js` parses it twice). Without the bucket file, the build cannot
-  be proved locally; `npm run check` type-checks the Astro code without it (it already
-  reports type errors on `master`, so compare its result before and after your change).
+  be proved locally; `npm run check` type-checks the Astro code without it and must
+  finish with 0 errors. The `check` workflow runs it on every pull request.
 - **Whole image**: `docker compose build` (needs `./credentials.json`, a service account
   key with read access to the bucket; never commit it).
 
